@@ -11,16 +11,12 @@ from django.views.generic.base import TemplateView
 
 
 def Get_Product():
-    Products = Product.objects.all()
-    serializer = ProductSerializer(Products, many=True)
-    # for product_data in serializer.data:
-    #     # 如果產品有圖片，則將完整的 URL 包裝起來
-    #     if product_data.get('image'):
-    #         product_data['image_url'] = product_data['image']
+    products = Product.objects.all()
+    serializer = ProductSerializer(products, many=True)
+    print('serializer', serializer.data)
     data = {
-        'Products': serializer.data
+        'Products': serializer.data 
     }
-
     return data
 
 def Post_Product(data_form):

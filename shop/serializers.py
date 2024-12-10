@@ -1,7 +1,11 @@
 from rest_framework import serializers
 from .models import Product
 
+
 class ProductSerializer(serializers.ModelSerializer):
+    # 這樣 category 字段就會顯示 Category 模型的 __str__ 方法返回的名稱
+    category = serializers.StringRelatedField()
+
     class Meta:
-        model = Product  # 指定使用的模型
-        fields = '__all__'  # 指定要序列化的字段，這裡選擇所有字段
+        model = Product
+        fields = '__all__'  # 保留其他所有字段

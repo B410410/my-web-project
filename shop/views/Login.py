@@ -25,7 +25,7 @@ class LoginView(APIView):
         if user is not None:
             login(request, user)
             return JsonResponse({
-                'status': 'success',
+                'status': 'ok',
                 'message': '登入成功',
                 'redirect': reverse('shop:product')
             }, status=200)

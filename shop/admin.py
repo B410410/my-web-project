@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import Product, order
+from shop import models
 
-admin.site.register(Product)
-admin.site.register(order)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ('category', 'slu', 'name', 'stock', 'price',)
+    ordering = ('category',)
+
+admin.site.register(models.UserForm)
+admin.site.register(models.Product, ProductAdmin)
+admin.site.register(models.Category)
+admin.site.register(models.order)

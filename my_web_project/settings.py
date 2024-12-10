@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+from dotenv import load_dotenv
 from pathlib import Path
 import os
 
@@ -28,6 +29,16 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# 加載 .env 文件
+# load_dotenv()
+
+# email設定
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # 郵件伺服器
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True  # TLS 加密
+
+
 # 設定媒體檔案儲存的路徑
 MEDIA_URL = '/media/'  # 網站上存取媒體檔案的 URL 路徑
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # 實際儲存圖片的根目錄
@@ -44,7 +55,18 @@ INSTALLED_APPS = [
     'firstapp',
     'shop',
     'panda_app',
+    'captcha',
+    'registration',
 ]
+
+# 註冊後帳號有效天數
+ACCOUNT_ACTIVATION_DAYS = 7
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+}
 
 LOGIN_REDIRECT_URL = 'shop:product'  # 注意使用 app_name:url_name 的格式
 LOGIN_URL = 'shop:login'  # 未登入時重定向到登入頁
@@ -89,7 +111,7 @@ WSGI_APPLICATION = 'my_web_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
+        'NAME': 'my_web',
         'USER': 'postgres',
         'PASSWORD': '1234',
         'HOST' : 'localhost',

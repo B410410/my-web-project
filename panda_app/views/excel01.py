@@ -1,6 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from rest_framework.views import APIView
 from django.http import JsonResponse, HttpResponse
+from rest_framework.response import Response
 import pandas as pd
 from io import BytesIO
 from tempfile import NamedTemporaryFile
@@ -129,7 +130,8 @@ def export_by_openpyxl(file_data_form):
     wb.save(output)
     output.seek(0)
 
-    response = HttpResponse(output, content_type='application/vnd.ms-excel')
+    # response = HttpResponse(output, content_type='application/vnd.ms-excel')
+    response = Response(output.getvalue(), content_type='application/vnd.ms-excel')
     response['Content-Disposition'] = 'attachment; filename="updated_orders.xlsx"'
 
     return response
@@ -147,11 +149,15 @@ class Excel01(APIView):
     template_name = 'excel01.html'
 
     def get(self, request, *args, **kwargs):
-        
+        if not request.user.is_authenticated:
+            # 如果未登錄，重定向到登錄頁面
+            return redirect('login')  
         data = {}
         return render(request, self.template_name, data)
     
     def post(self, request):
+        if not request.user.is_authenticated:
+            return redirect('login')
         file_data_form = request.FILES
         export_file = export(file_data_form)
 
