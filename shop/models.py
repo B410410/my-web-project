@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from filer.fields.image import FilerImageField
 
 class UserForm(models.Model):
     CITY = [
@@ -32,7 +33,7 @@ class Product(models.Model):
     slu = models.CharField(max_length=20)   #產品編號
     name = models.CharField(max_length=100)     #產品名稱
     description = models.TextField()    #產品描述
-    image = models.ImageField(upload_to='shop/images/', null=True, blank=True)  #圖片
+    image = FilerImageField(on_delete=models.CASCADE, related_name="product_image")  # 圖片
     website = models.URLField(null=True)    #產品網站
     stock = models.PositiveIntegerField(default=0)  #庫存
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)  #價格

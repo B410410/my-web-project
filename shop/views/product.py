@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from ..models import Product, order
+from ..models import Product, order, Category
 from ..serializers import ProductSerializer
 from django.http import JsonResponse
 from django.db.models import Sum, Max, Min, Avg
@@ -10,14 +10,46 @@ from django.views.generic.base import TemplateView
 
 
 
-def Get_Product():
-    products = Product.objects.all()
-    serializer = ProductSerializer(products, many=True)
-    print('serializer', serializer.data)
-    data = {
-        'Products': serializer.data 
-    }
-    return data
+def Get_Product(slu=None):
+    data = {}
+    data2 = {}
+    try:
+        all_categories = Category.objects.all()
+        data2 = {
+            'categories': all_categories
+        }
+        
+        if slu:
+            product = Product.objects.filter(slu=slu).first()
+            if product:
+                product_l = [product]
+                serializer = ProductSerializer(product_l, many=True)
+                data = {
+                    'Products': serializer.data
+                }
+            else:
+                data = {'Products': []}
+        else:
+            products = Product.objects.all()
+            serializer = ProductSerializer(products, many=True)
+            data = {
+                'Products': serializer.data
+            }
+
+    except Category.DoesNotExist:
+        data2 = {'categories': []}
+        print("Error: Categories data not found.")
+        
+    except Product.DoesNotExist:
+        data = {'Products': []}
+        print("Error: Products data not found.")
+    
+    except Exception as e:
+        data = {'Products': [], 'error': str(e)}
+        print(f"Error: {e}")
+        
+    return data, data2
+
 
 def Post_Product(data_form):
     print(data_form)
@@ -59,10 +91,15 @@ def Post_Product(data_form):
 class ShopProduct(APIView):
     template_name ='product.html'
 
-    def get(self, request):
-        data = Get_Product()
+    def get(self, request, slu=None):
+        data, data2 = Get_Product(slu)
 
-        return render(request, self.template_name, data)
+        template_data = dict(
+            data=data,
+            data2=data2,
+        )
+        
+        return render(request, self.template_name, template_data)
     
     def post(self, request):
         data_form = request.data

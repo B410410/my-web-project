@@ -37,11 +37,65 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # 郵件伺服器
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True  # TLS 加密
+EMAIL_HOST_USER = 'brucek688@gmail.com'
+EMAIL_HOST_PASSWORD = 'cwog yvdu xxqy rcly'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # 默認發送者郵箱
 
+# 路徑設定，這是 django-filer 處理文件儲存的位置
+DEFAULT_FILE_STORAGE = 'filer.storage.FilerStorage'
 
 # 設定媒體檔案儲存的路徑
 MEDIA_URL = '/media/'  # 網站上存取媒體檔案的 URL 路徑
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # 實際儲存圖片的根目錄
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')     # 實際儲存圖片的根目錄
+
+# 處理縮圖
+THUMBNAIL_PROCESSORS = (
+    'easy_thumbnails.processors.colorspace',
+    'easy_thumbnails.processors.autocrop',
+    'easy_thumbnails.processors.scale_and_crop',
+    'easy_thumbnails.processors.filters',
+)
+
+FILER_STORAGES = {
+    'public': {
+        'main': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+            'OPTIONS': {
+                'location': os.path.join(BASE_DIR, 'media/filer'),  # 儲存路徑
+                'base_url': '/media/filer/', 
+            },
+            'UPLOAD_TO': 'filer.utils.generate_filename.randomized',  # 使用隨機命名
+            'UPLOAD_TO_PREFIX': 'filer_public',  # 儲存目錄前綴
+        },
+        'thumbnails': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+            'OPTIONS': {
+                'location': os.path.join(BASE_DIR, 'media/filer_thumbnails'),
+                'base_url': '/media/filer_thumbnails/',
+            },
+        },
+    },
+    'private': {
+        'main': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+            'OPTIONS': {
+                'location': os.path.join(BASE_DIR, 'smedia/filer_private'),
+                'base_url': '/smedia/filer_private/',
+            },
+            'UPLOAD_TO': 'filer.utils.generate_filename.randomized',
+            'UPLOAD_TO_PREFIX': 'filer_private', 
+        },
+        'thumbnails': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+            'OPTIONS': {
+                'location': os.path.join(BASE_DIR, 'smedia/filer_thumbnails_private'),
+                'base_url': '/smedia/filer_thumbnails_private/',
+            },
+        },
+    },
+}
+
+
 
 # Application definition
 
@@ -57,6 +111,8 @@ INSTALLED_APPS = [
     'panda_app',
     'captcha',
     'registration',
+    'filer',  # django-filer
+    'easy_thumbnails',
 ]
 
 # 註冊後帳號有效天數
@@ -97,6 +153,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'shop.context_processors.all_categories',
             ],
         },
     },

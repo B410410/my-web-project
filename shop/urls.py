@@ -15,10 +15,10 @@ urlpatterns =[
     path('login/', LoginView.as_view(), name='login'), # 登入
     path('logout/', logout_view, name='logout'), # 登出
     path('profile/', ProfileView.as_view(), name='profile'), #用戶資料
-    # path('profile/update/', views.UpdateProfileView.as_view(), name='update_profile'),  # 用戶資料更新頁面
     path('product/', ShopProduct.as_view(), name='product'), # 商品頁面
+    path('product/<int:slu>/', ShopProduct.as_view(), name='product_detail'), # 單個商品
     path('cart/', Cart.as_view(), name='cart'), # 購物車
     path('testhtml/', listing), # 測試練習
-    path('testhtml/<str:id>', detail),
+    path('testhtml01/', detail),
     path('contact/', Contact.as_view(), name='contact') #聯絡客服
 ]
