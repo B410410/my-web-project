@@ -37,9 +37,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # 郵件伺服器
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True  # TLS 加密
-EMAIL_HOST_USER = 'brucek688@gmail.com'
-EMAIL_HOST_PASSWORD = 'cwog yvdu xxqy rcly'
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER  # 默認發送者郵箱
+
 
 # 路徑設定，這是 django-filer 處理文件儲存的位置
 DEFAULT_FILE_STORAGE = 'filer.storage.FilerStorage'
