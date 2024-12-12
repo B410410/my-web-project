@@ -13,13 +13,13 @@ class Contact(APIView):
         return render(request, self.template_name, data)
     
     def post(self, request, *args, **kwargs):
-        if request.method == 'POST':
-            form = ContactForm(request.POST)
-            if form.is_valid():
-                form.save()
-                data_j = {'status':'OK', 'msg':'表單已寄送'}
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            form.save()
+            data_j = {'status':'OK', 'msg':'表單已寄送'}
         else:
-            data_j = {'status':'ERROR', 'msg':'表單寄送失敗'}
+            errors = form.errors.as_json()
+            data_j = {'status':'ERROR', 'msg': errors}
 
         return Response(data_j)
     

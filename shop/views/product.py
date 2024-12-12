@@ -10,20 +10,19 @@ from django.views.generic.base import TemplateView
 
 
 
-def Get_Product(slu=None):
+def Get_Product(category_id=None):
     data = {}
     data2 = {}
     try:
-        all_categories = Category.objects.all()
-        data2 = {
-            'categories': all_categories
-        }
+        # categories = Category.objects.all()
+        # data2 = {
+        #     'categories': categories.data
+        # }
         
-        if slu:
-            product = Product.objects.filter(slu=slu).first()
-            if product:
-                product_l = [product]
-                serializer = ProductSerializer(product_l, many=True)
+        if category_id:
+            products = Product.objects.filter(category_id=category_id)
+            if products:
+                serializer = ProductSerializer(products, many=True)
                 data = {
                     'Products': serializer.data
                 }
@@ -48,7 +47,7 @@ def Get_Product(slu=None):
         data = {'Products': [], 'error': str(e)}
         print(f"Error: {e}")
         
-    return data, data2
+    return data
 
 
 def Post_Product(data_form):
@@ -91,13 +90,13 @@ def Post_Product(data_form):
 class ShopProduct(APIView):
     template_name ='product.html'
 
-    def get(self, request, slu=None):
-        data, data2 = Get_Product(slu)
+    def get(self, request, category_id=None):
+        data = Get_Product(category_id)
 
-        template_data = dict(
-            data=data,
-            data2=data2,
-        )
+        template_data = { 
+            'data': data, 
+            # 'data2': data2 
+            }        
         
         return render(request, self.template_name, template_data)
     

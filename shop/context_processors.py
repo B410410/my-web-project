@@ -1,5 +1,7 @@
 from .models import Category
 
-def all_categories(request):
+def category_list(request): 
     categories = Category.objects.all()
+    # for category in categories: 
+    #     print(f"Category ID: {category.id}, Name: {category.name}")
     return {'categories': categories}

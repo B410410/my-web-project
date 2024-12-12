@@ -1,5 +1,6 @@
 from django.urls import path
 from .views.product import ShopProduct
+from .views.product_d import Product_d
 from .views.Cart import Cart
 from .views.testHtml import listing
 from .views.testProduct import detail
@@ -16,7 +17,8 @@ urlpatterns =[
     path('logout/', logout_view, name='logout'), # 登出
     path('profile/', ProfileView.as_view(), name='profile'), #用戶資料
     path('product/', ShopProduct.as_view(), name='product'), # 商品頁面
-    path('product/<int:slu>/', ShopProduct.as_view(), name='product_detail'), # 單個商品
+    path('product/<int:slu>/', Product_d.as_view(), name='product_detail'), # 商品詳細資料
+    path('category/<int:category_id>/', ShopProduct.as_view(), name='product_category'), # 商品類別
     path('cart/', Cart.as_view(), name='cart'), # 購物車
     path('testhtml/', listing), # 測試練習
     path('testhtml01/', detail),
