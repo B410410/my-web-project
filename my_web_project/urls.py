@@ -25,8 +25,8 @@ urlpatterns = [
     path('shop/', include('shop.urls')),
     path('filer/', include('filer.urls')),
     path('panda/', include('panda_app.urls')),
-    path('captcha/', include('captcha.urls')), #機器人驗證模組
-    path('accounts/', include('registration.backends.default.urls')), #帳號註冊驗證
+    path('captcha/', include('captcha.urls')), # 機器人驗證模組
+    path('accounts/', include('registration.backends.default.urls')), # 帳號註冊驗證
 ]
 
 

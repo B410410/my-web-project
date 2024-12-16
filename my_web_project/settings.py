@@ -113,6 +113,8 @@ INSTALLED_APPS = [
     'easy_thumbnails',
 ]
 
+CART_SESSION_ID = 'cart'
+
 # 註冊後帳號有效天數
 ACCOUNT_ACTIVATION_DAYS = 7
 
@@ -156,6 +158,8 @@ TEMPLATES = [
         },
     },
 ]
+
+SESSION_EXPIRE_AT_BOWSER_CLOSE = True
 
 WSGI_APPLICATION = 'my_web_project.wsgi.application'
 
