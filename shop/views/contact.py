@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from ..forms import ContactForm
@@ -8,6 +8,8 @@ class Contact(APIView):
     template_name = 'contact.html'
 
     def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('shop:login')
         form = ContactForm()
         data = {'form':form}
         return render(request, self.template_name, data)

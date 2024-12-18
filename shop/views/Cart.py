@@ -32,19 +32,18 @@ class CustomCart(Cart):
 
         quantity = int(quantity)
         current_quantity = int(self.cart[slu]['quantity'])
-
-        if quantity > product.stock:
-            raise ValueError('庫存不足')
-        
-        if current_quantity + quantity > product.stock:
-            raise ValueError('購物車數量已大於庫存')
-
-        # 程式有問題_20241216
+        # 更新數量
         if update_quantity:
+            if quantity > product.stock:
+                raise ValueError('庫存不足')
+        
             self.cart[slu]['quantity'] = quantity
-            current_quantity = quantity
         else:
-            self.cart[slu]['quantity'] = current_quantity + quantity
+            new_quaantity = quantity + current_quantity
+            if new_quaantity > product.stock:
+                raise ValueError('購物車數量已大於庫存')
+            
+            self.cart[slu]['quantity'] = new_quaantity
 
         self.save()
 
@@ -90,6 +89,8 @@ class CartView(APIView):
     template_name = 'cart.html'
 
     def get(self, request):
+        if not request.user.is_authenticated:
+            return redirect('shop:login')
         cart = CustomCart(request)
         cart_items = list(cart)
         cart_total = cart.get_total_price()
@@ -132,9 +133,15 @@ class CartView(APIView):
             cart.add(product, quantity, update_quantity=True)
 
             cart_items = list(cart)
+            cart_count = len(cart)
             total_price = cart.get_total_price()
 
-            ret_json = {'status': 'ok', 'cart_items': cart_items, 'total_price': total_price}
+            ret_json = {
+                'status': 'ok', 
+                'cart_items': cart_items, 
+                'total_price': total_price,
+                'cart_count': cart_count,
+                }
             return JsonResponse(ret_json)
         
         except Product.DoesNotExist:
@@ -154,9 +161,15 @@ class CartView(APIView):
             cart.remove(slu)
 
             cart_items = list(cart)
+            cart_count = len(cart)
             total_price = cart.get_total_price()
 
-            ret_json = {'status': 'ok', 'cart_items': cart_items, 'total_price': total_price}
+            ret_json = {
+                'status': 'ok', 
+                'cart_items': cart_items, 
+                'total_price': total_price,
+                'cart_count': cart_count,
+                }
             return JsonResponse(ret_json)
         
         except Exception as e:

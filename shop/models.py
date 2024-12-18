@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
 from filer.fields.image import FilerImageField
+import random
+import string
+import uuid
 
 class UserForm(models.Model):
     CITY = [
@@ -29,6 +32,7 @@ class Category(models.Model):
         return self.name
 
 class Product(models.Model):
+    # on_delete=models.CASCADE:這個參數指定了當 category 被刪除時，與之相關的 Product 也會被刪除
     category = models.ForeignKey(Category, on_delete=models.CASCADE)    #產品分類
     slu = models.CharField(max_length=20)   #產品編號
     name = models.CharField(max_length=100)     #產品名稱
@@ -42,24 +46,38 @@ class Product(models.Model):
         return self.name
         
     
-class order(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)  #訂單與產品的關聯
-    quantity = models.PositiveIntegerField(default=1)   #訂單數量
-    total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)   #訂單總價
-    order_date = models.DateField(auto_now_add=True)    #訂單日期
-    customer_name = models.CharField(max_length=200, blank=True, null=True) #顧客姓名
-    shipping_address = models.TextField(blank=True, null=True)  #顧客地址
+class Order(models.Model):
+    order_number = models.CharField(max_length=20, unique=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=20) 
+    address = models.CharField(max_length=200)
+    phone = models.CharField(max_length=15)
+    create_date = models.DateTimeField(auto_now_add=True)
+    update_date = models.DateTimeField(auto_now=True)
     status = models.CharField(  #訂單狀態
         max_length=20,
-        choices=[('pending', '待處理'), ('completed', '已完成'), ('shipped', '已發貨')],
-        default='pending'
+        choices=[('unpaid', '未付款'), ('paid', '已付款'), ('shipped', '已出貨')],
+        default='unpaid',
     )
-
-    def save(self, *args, **kwargs):
-        # 計算總價：商品價格 * 購買數量
-        self.total_price = self.product.price * self.quantity
-        super().save(*args, **kwargs)
+    class Meta:
+        ordering = ('-create_date',)    # 按建立日期降序排列
 
     def __str__(self):
-        total_price_int = int(self.total_price)  # 顯示總價的整數部分
-        return f"訂單商品: {self.product.name} (數量: {self.quantity}, 總價: {total_price_int}台幣)"
+        return f"訂單編號: {self.order_number}"
+    
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            self.order_number = str(uuid.uuid4())[:20]
+        # 從Order的父類別方法開始用
+        super(Order, self).save(*args, **kwargs)
+    
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+    # PositiveIntegerField:存儲正整數，只接受大於或等於 0 的整數
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"訂單編號: {self.order.order_number}, 價錢: {self.price}"

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from ..models import Product, order, Category
+from ..models import Product, Order, Category
 from ..serializers import ProductSerializer
 
 def get_product_d(slu=None):
