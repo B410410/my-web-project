@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}訂單確認{% endblock %}
+
+{% block extra_css %}
+<style>
+    .order-summary {
+        margin-top: 20px;
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .order-summary h3 {
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-control {
+        width: 100%;
+    }
+
+    .submit-btn {
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>訂單確認</h2>
+    
+    <div class="order-summary">
+        <h3>訂單資訊</h3>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>商品圖片</th>
+                    <th>商品名稱</th>
+                    <th>數量</th>
+                    <th>單價</th>
+                    <th>總價</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                <tr id="cart-item-{{ item.slu }}">
+                    <td>
+                        <img src="{% if item.image %}{{ MEDIA_URL }}{{ item.image }}{% else %}https://via.placeholder.com/250{% endif %}" 
+                             alt="{{ item.name }}" class="card-img-top img-fluid" 
+                             style="max-width: 100px; max-height: 100px;" 
+                             onerror="this.onerror=null;this.src='https://via.placeholder.com/250';">
+                    </td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.price }}</td>
+                    <td>${{ item.total }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="text-right">
+            <h4>總金額: $<span id="total-price">{{ cart_total }}</span></h4>
+        </div>
+    </div>
+
+    <h3>填寫收件資訊</h3>
+
+    <div class="form-group">{% csrf_token %}
+        <label for="full_name">收件人姓名</label>
+        <input type="text" id="full_name" class="form-control" required>
+    </div>
+
+    <div class="form-group">
+        <label for="address">收件地址</label>
+        <textarea id="address" class="form-control" required></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="phone">連絡電話</label>
+        <input type="number" id="phone" class="form-control" required>
+    </div>
+
+    <div class="text-right submit-btn">
+        <button type="button" id="submit-order" class="btn btn-primary">確定下單</button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#submit-order').on('click', function(){
+        let csrf_token = $('input[name="csrfmiddlewaretoken"]').val();
+        let fullName = $('#full_name').val();
+        let address = $('#address').val();
+        let phone = $('#phone').val();
+        console.log(fullName);
+
+        if (!fullName) {
+            alert('請填寫收件人');
+            return;
+        }
+        if (!address) {
+            alert('請填寫收件人地址');
+            return;
+        }
+        if (!phone || !/^[0-9]{10,15}$/.test(phone)) {
+         alert('請填寫有效的手機號碼');
+         return;
+        }
+
+        let data = {
+            full_name: fullName,
+            address: address,
+            phone: phone,
+        };
+
+        fetch('/shop/order/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrf_token,
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('網路異常');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'ok') {
+                alert(data.msg);
+                window.location.href = '/shop/myorders/';
+            } else {
+                alert('下單失敗');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('下單失敗');
+        });
+    })
+});
+</script>
+{% endblock %}

@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}購物車{% endblock %}
+
+{% block extra_css %}
+<style>
+    th {
+        writing-mode: horizontal-tb; /* 使標題為水平 */
+        text-align: center;  /* 文字置中 */
+        vertical-align: middle; /* 文字垂直置中 */
+    }
+    table {
+        table-layout: fixed; /* 固定表格欄位大小 */
+        width: 100%;  /* 適應容器寬度 */
+    }
+    th, td {
+        padding: 10px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-8">
+            <h2>購物車</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>商品圖片</th>
+                        <th>商品名稱</th>
+                        <th>數量</th>
+                        <th>庫存</th>
+                        <th>單價</th>
+                        <th>總價</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="cart-table-body">
+                    {% csrf_token %}
+                    {% for item in cart_items %}
+                    <tr id="cart-item-{{ item.slu }}">
+                        <td>
+                            <img src="{% if item.image %}{{ MEDIA_URL }}{{ item.image }}{% else %}https://via.placeholder.com/250{% endif %}" 
+                                 alt="{{ item.name }}" class="card-img-top img-fluid" 
+                                 style="max-width: 200px; max-height: 100px;" 
+                                 onerror="this.onerror=null;this.src='https://via.placeholder.com/250';">
+                        </td>
+                        <td>{{ item.name }}</td>
+                        <td>
+                            <input type="number" class="form-control quantity-input" 
+                                   data-slu="{{ item.slu }}" 
+                                   value="{{ item.quantity }}" min="1">
+                        </td>
+                        <td class="product-stock">{{ item.stock }}</td>
+                        <td>${{ item.price }}</td>
+                        <td class="total-item-price">${{ item.total }}</td>
+                        <td>
+                            <button class="btn btn-danger remove-item" 
+                                    data-slu="{{ item.slu }}">
+                                刪除
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center" style="font-size: 50px;">沒有商品</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="text-right">
+                <h3>總金額: $<span id="total-price">{{ cart_total }}</span></h3>
+                <a href="{% url 'shop:order' %}" class="btn btn-primary">確認訂單</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // 數量改變時更新購物車
+        $('.quantity-input').on('change', function() {
+            let slu = $(this).data('slu');
+            let newQuantity = $(this).val();
+            // 找到這個輸入框所在的表格行 <tr>
+            let stock = $(this).closest('tr').find('.product-stock').text();
+            // 轉整數
+            stock = parseInt(stock);
+            if (newQuantity > stock) {
+                $(this).val(stock);
+                alert('庫存不足');
+                return;
+            }
+
+            updateCart(slu, newQuantity, stock);
+        });
+
+        // 刪除商品
+        $('.remove-item').on('click', function() {
+            let slu = $(this).data('slu');
+            removeItemFromCart(slu);
+        });
+
+        // 更新數量
+        function updateCart(slu, quantity) {
+            let csrf_token = $('input[name="csrfmiddlewaretoken"]').val();
+            let data = {
+                slu: slu,
+                quantity: quantity
+            };
+
+            fetch('/shop/cart/', {
+                method: 'PUT', 
+                headers: {
+                    'X-CSRFToken': csrf_token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('網路異常');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'ok') {
+                    // 更新總金額
+                    $('#total-price').text(data.total_price);
+                    data.cart_items.forEach(item => {
+                        // 更新單品總價
+                        $(`[data-slu="${item.slu}"]`).closest('tr').find('.total-item-price').text('$' + item.total.toFixed(2));
+                    });
+                    // alert('購物車更新成功');
+                } else {
+                    alert(data.msg);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('更新購物車失敗');
+            });
+        }
+
+        // 刪除商品
+        function removeItemFromCart(slu) {
+            let csrf_token = $('input[name="csrfmiddlewaretoken"]').val();
+            let data = { slu: slu };
+
+            fetch('/shop/cart/', {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrf_token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('網路異常');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'ok') {
+                    // 刪除該行
+                    $(`[data-slu="${slu}"]`).closest('tr').remove();
+                    $('#total-price').text(data.total_price);
+                    // alert('商品已刪除');
+                } else {
+                    alert(data.msg);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('刪除商品失敗');
+            });
+        }
+    });
+</script>
+{% endblock %}

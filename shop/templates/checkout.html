@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}訂單結帳{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 80px;">
+    <h2 class="text-center">訂單結帳</h2>
+
+    {% if order %}
+    <div class="order-summary">
+        <h3 class="mb-4">訂單編號：{{ order.order_number }}</h3>
+        <p><strong>收件人：</strong>{{ order.full_name }}</p>
+        <p><strong>收件地址：</strong>{{ order.address }}</p>
+        <p><strong>連絡電話：</strong>{{ order.phone }}</p>
+        <p><strong>訂單金額：</strong>{{ order.total_amount }}元</p>
+        <p><strong>訂單狀態：</strong>{{ order.status }}</p>
+    </div>
+
+    <div class="order-items mt-4">
+        <h4>訂單明細</h4>
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>商品名稱</th>
+                    <th>數量</th>
+                    <th>單價</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order_items %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.price }}元</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PayPal -->
+    <div class="paypal-form mt-4">
+        <h4>選擇付款方式</h4>
+        <form action="{{ paypalForm.action }}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ paypalForm.as_p }} <!-- 渲染 PayPal 表單，包含必要的隱藏字段和付款按鈕 -->
+            </div>
+            <button type="submit" class="btn btn-success btn-block">前往 PayPal 付款</button>
+        </form>
+    </div>
+
+    {% else %}
+        <p class="text-danger">訂單不存在或發生錯誤，請聯絡客服。</p>
+    {% endif %}
+</div>
+
+{% endblock %}
+

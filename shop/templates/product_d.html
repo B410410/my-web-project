@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}商品詳細資料{% endblock %}
+
+{% block extra_css %}
+<style>
+.product-image {
+    max-width: 100%;
+    height: auto;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+.product-image:hover {
+    transform: scale(1.1);
+}
+.product-details {
+    margin-top: 20px;
+}
+.product-details p {
+    font-size: 1.1rem;
+}
+.product-details a {
+    text-decoration: none;
+    color: #030bff;
+}
+.product-details a:hover {
+    text-decoration: underline;
+}
+.text-dark-orange { 
+    color: rgb(202, 84, 0);
+}
+.product-details .btn-primary {
+    background-color: #003cee;
+    color: white; 
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.product-details .btn-primary:hover {
+    background-color: #f05800; /* 懸停時背景顏色變化 */
+    transform: scale(1.05); /* 按鈕放大效果 */
+    text-decoration: none;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        {% if product_d %}
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if product_d.0.image %}
+                    <img src="{{ MEDIA_URL }}{{ product_d.0.image }}" alt="{{ product_d.0.name }}" class="product-image img-fluid" style="max-height: 400px; object-fit: contain;" data-toggle="modal" data-target="#imageModal">
+                    {% else %}
+                    <img src="https://via.placeholder.com/300" alt="{{ product_d.0.name }}" class="product-image img-fluid">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 product-details">
+            <div class="card">
+                <div class="card-header">
+                    <h2>{{ product_d.0.name }}</h2>
+                </div>
+                <div class="card-body">
+                    <p><strong>產品編號:</strong> {{ product_d.0.slu }}</p>
+                    <p><strong>描述:</strong> {{ product_d.0.description }}</p>
+                    <p><strong>價格:</strong> ${{ product_d.0.price|floatformat:2 }}</p>
+                    <p><strong>庫存:</strong> 
+                        {% if product_d.0.stock >= 5 %}
+                        <span class="text-success">{{ product_d.0.stock }}</span> 
+                        {% elif product_d.0.stock > 0 %}
+                        <span class="text-dark-orange">{{ product_d.0.stock }}</span>
+                        {% else %}
+                        <span class="text-danger">缺貨</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>產品網站:</strong> <a href="{{ product_d.0.website }}" target="_blank">{{ product_d.0.website }}</a></p> 
+                    {% if product_d.0.stock > 0 %}
+                        <a href="#" class="btn btn-primary">加入購物車</a>
+                    {% elif product_d.0.stock == 0 %}
+                        <span class="text-danger">缺貨</span>
+                    {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <p class="col-12 text-center" style="font-size: 40px; font-weight: bold;">沒有商品</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalLabel">商品圖片</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body text-center">
+        <img src="{{ MEDIA_URL }}{{ product_d.0.image }}" alt="{{ product_d.0.name }}" class="img-fluid" style="max-height: 500px;">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 可以加入一些 jQuery 動畫或其他功能
+    $(document).ready(function () {
+        // 這裡可以加入一些額外的動態效果
+        $(".product-image").on("click", function() {
+            $('#imageModal').modal('show');
+        });
+    });
+</script>
+{% endblock %}

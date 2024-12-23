@@ -162,24 +162,25 @@ def acc3003_main(data_form):
     ws['A1'].alignment = alignment
     ws['A2'].alignment = alignment
 
-    topic = ['會計編號', '會計科目', '廠商', '設備名稱', '部門', '數量', 
+    topic = ['會計編號', '貸方編號', '會計科目', '廠商', '設備名稱', '部門', '數量', 
             '單位', '取得日期', '取得原價', '殘值', 'Y/M', '期初累折',
             'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 
             '本期提列數', '期末累折', '未折減餘額']
     
     # 欄位寬度
-    ws.column_dimensions['B'].width = 15
     ws.column_dimensions['C'].width = 15
-    ws.column_dimensions['D'].width = 50
-    ws.column_dimensions['H'].width = 15
-    ws.column_dimensions['I'].width = 20 
-    ws.column_dimensions['J'].width = 20
-    ws.column_dimensions['K'].width = 30
-    ws.column_dimensions['L'].width = 20
+    ws.column_dimensions['D'].width = 15
+    ws.column_dimensions['E'].width = 50
+    ws.column_dimensions['I'].width = 15
+    ws.column_dimensions['J'].width = 20 
+    ws.column_dimensions['K'].width = 25
+    ws.column_dimensions['L'].width = 15
+    ws.column_dimensions['M'].width = 20
     ws.column_dimensions['Y'].width = 20
     ws.column_dimensions['Z'].width = 20
     ws.column_dimensions['AA'].width = 20
+    ws.column_dimensions['AB'].width = 20
     for i in range(0, len(topic)):
         ws.cell(3, i+1, topic[i]).alignment = alignment
 
@@ -273,23 +274,39 @@ def acc3003_main(data_form):
                 11: total_Nov,
                 12: total_Dec,
             }
-
-            if v['credit_account_no'] in ('1569', '1529', '1559', '1589', '15831'):
-                credit_account_no_monthly_totals[(sorted_data[index - 1][1]['credit_account_no'],
-                            sorted_data[index - 1][1]['account_name'])] = {
-                1: total_Jan,
-                2: total_Feb,
-                3: total_Mar,
-                4: total_Apr,
-                5: total_May,
-                6: total_Jun,
-                7: total_Jul,
-                8: total_Aug,
-                9: total_Sep,
-                10: total_Oct,
-                11: total_Nov,
-                12: total_Dec,
-            }
+            if v['credit_account_no']:
+                key = (sorted_data[index - 1][1]['credit_account_no'], sorted_data[index - 1][1]['account_name'])            
+                # 如果該 credit_account_no 和 account_name 組合已經存在，則加總數據
+                if key in credit_account_no_monthly_totals:
+                    totals = credit_account_no_monthly_totals[key]
+                    totals[1] += total_Jan
+                    totals[2] += total_Feb
+                    totals[3] += total_Mar
+                    totals[4] += total_Apr
+                    totals[5] += total_May
+                    totals[6] += total_Jun
+                    totals[7] += total_Jul
+                    totals[8] += total_Aug
+                    totals[9] += total_Sep
+                    totals[10] += total_Oct
+                    totals[11] += total_Nov
+                    totals[12] += total_Dec
+                else:
+                    # 如果尚未存在，則直接創建新的條目
+                    credit_account_no_monthly_totals[key] = {
+                        1: total_Jan,
+                        2: total_Feb,
+                        3: total_Mar,
+                        4: total_Apr,
+                        5: total_May,
+                        6: total_Jun,
+                        7: total_Jul,
+                        8: total_Aug,
+                        9: total_Sep,
+                        10: total_Oct,
+                        11: total_Nov,
+                        12: total_Dec,
+                    }
             
             # 重置每月小計
             total_Jan = 0
@@ -308,27 +325,28 @@ def acc3003_main(data_form):
 
         # 寫入資料
         ws.cell(row_count, 1, v['account_no']).alignment = alignment          # 會計編號
-        ws.cell(row_count, 2, v['account_name']).alignment = alignment        # 會計科目
-        ws.cell(row_count, 3, v['asset_vendor']).alignment = alignment        # 廠商
-        ws.cell(row_count, 4, v['asset_name'])                                # 設備名稱
-        ws.cell(row_count, 5, v['depart_no']).alignment = alignment           # 部門代號
-        ws.cell(row_count, 6, v['asset_qty']).alignment = alignment           # 數量
-        ws.cell(row_count, 7, v['asset_unit']).alignment = alignment          # 單位
+        ws.cell(row_count, 2, v['credit_account_no']).alignment = alignment   # 貸方編號
+        ws.cell(row_count, 3, v['account_name']).alignment = alignment        # 會計科目
+        ws.cell(row_count, 4, v['asset_vendor']).alignment = alignment        # 廠商
+        ws.cell(row_count, 5, v['asset_name'])                                # 設備名稱
+        ws.cell(row_count, 6, v['depart_no']).alignment = alignment           # 部門代號
+        ws.cell(row_count, 7, v['asset_qty']).alignment = alignment           # 數量
+        ws.cell(row_count, 8, v['asset_unit']).alignment = alignment          # 單位
 
         # 西元轉民國
         asset_date = v['asset_date']
         roc_year = asset_date.year - 1911
         roc_date = f"{roc_year}/{asset_date.month}/{asset_date.day}"
-        ws.cell(row_count, 8, roc_date).alignment = alignment                 # 取得日期
-        ws.cell(row_count, 9, v['asset_amount'])                              # 取得原價
-        ws.cell(row_count, 10, v['asset_residual'])                           # 殘值
-        ws.cell(row_count, 11, v['number_installment'])                       # 攤提期數
-        ws.cell(row_count, 12, v['initial_grand_total'])                      # 期初累折金額
+        ws.cell(row_count, 9, roc_date).alignment = alignment                 # 取得日期
+        ws.cell(row_count, 10, v['asset_amount'])                             # 取得原價
+        ws.cell(row_count, 11, v['asset_residual'])                           # 殘值
+        ws.cell(row_count, 12, v['number_installment']).alignment = alignment # 攤提期數
+        ws.cell(row_count, 13, v['initial_grand_total'])                      # 期初累折金額
 
         # 每月攤提金額
         for month in range(1, 13):
-            amount = v['monthly_installment_amounts'].get(month, 0)  # 如果沒資料填入0
-            ws.cell(row_count, 12 + month, '' if amount == 0 else amount)  # 把0都轉成空字串
+            amount = v['monthly_installment_amounts'].get(month, 0)         # 如果沒資料填入0
+            ws.cell(row_count, 13 + month, '' if amount == 0 else amount)   # 把0都轉成空字串
             monthly_totals_2[month - 1] += amount
             if month == 1:
                 total_Jan += amount
@@ -357,16 +375,16 @@ def acc3003_main(data_form):
 
         # 本期提列數 : 1到12月的金額總和
         total_installments = sum(v['monthly_installment_amounts'].get(month, 0) for month in range(1, 13))
-        ws.cell(row_count, 25, total_installments)
+        ws.cell(row_count, 26, total_installments)
 
         # 期末累折
         final_total = v['initial_grand_total'] + total_installments
-        ws.cell(row_count, 26, final_total)
+        ws.cell(row_count, 27, final_total)
 
         # 未折減餘額
         remaining_balance = v['asset_amount'] - final_total
         remaining_balance = max(0, remaining_balance)
-        ws.cell(row_count, 27, remaining_balance)
+        ws.cell(row_count, 28, remaining_balance)
 
         # 累計各項金額
         total_asset_amount += v['asset_amount']
@@ -407,21 +425,37 @@ def acc3003_main(data_form):
             12: total_Dec,
         }
 
-        if v['credit_account_no'] in ('1569', '1529', '1559', '1589', '15831'):
-            credit_account_no_monthly_totals[v['credit_account_no'], v['account_name']] = {
-                1: total_Jan,
-                2: total_Feb,
-                3: total_Mar,
-                4: total_Apr,
-                5: total_May,
-                6: total_Jun,
-                7: total_Jul,
-                8: total_Aug,
-                9: total_Sep,
-                10: total_Oct,
-                11: total_Nov,
-                12: total_Dec,
-            }
+        if v['credit_account_no']:
+            key = (sorted_data[index - 1][1]['credit_account_no'], sorted_data[index - 1][1]['account_name'])
+            if key in credit_account_no_monthly_totals:
+                totals = credit_account_no_monthly_totals[key]
+                totals[1] += total_Jan
+                totals[2] += total_Feb
+                totals[3] += total_Mar
+                totals[4] += total_Apr
+                totals[5] += total_May
+                totals[6] += total_Jun
+                totals[7] += total_Jul
+                totals[8] += total_Aug
+                totals[9] += total_Sep
+                totals[10] += total_Oct
+                totals[11] += total_Nov
+                totals[12] += total_Dec
+            else:
+                credit_account_no_monthly_totals[key] = {
+                    1: total_Jan,
+                    2: total_Feb,
+                    3: total_Mar,
+                    4: total_Apr,
+                    5: total_May,
+                    6: total_Jun,
+                    7: total_Jul,
+                    8: total_Aug,
+                    9: total_Sep,
+                    10: total_Oct,
+                    11: total_Nov,
+                    12: total_Dec,
+                }
 
     row_count += 2
     topic = [
@@ -473,8 +507,14 @@ def acc3003_main(data_form):
 
     row_count += 3
 
+    sorted_totals = sorted(credit_account_no_monthly_totals.items(), key=lambda x:x[0][0])
+    #   sorted_totals = [
+    #     (('A001', 'Account 1'), {1: 100, 2: 200, 3: 300}),
+    #     (('A003', 'Account 3'), {1: 120, 2: 220, 3: 320}),
+    #     (('B002', 'Account 2'), {1: 150, 2: 250, 3: 350})
+    # ]
     credit_account_no_monthly_totals_sum = [0] * 13
-    for (credit_account_no, account_name), totals in credit_account_no_monthly_totals.items():
+    for (credit_account_no, account_name), totals in sorted_totals:
         ws.cell(row_count, 10, credit_account_no).alignment = alignment
         ws.cell(row_count, 11, f'{roc_year_1}年{account_name}提列折舊')
 

@@ -1,0 +1,179 @@
+{% extends "layout15.html" %}
+
+{% block headtitle %}acc3003財產目錄{% endblock %}
+{% block apphead %}財產目錄 acc3003{% endblock %}
+
+{% block applink %}
+<link rel="stylesheet" href="/static/CDN/DataTables/datatables.min.css">
+<link rel="stylesheet" href="/static/dosuper.ending.css">
+<style>
+  #container1 {
+  background-color : rgb(250, 227, 169);
+}
+</style>
+{% endblock %}
+
+{% block apphtml %}
+<div id="container1">
+  <div class="py-1 input-group">
+    {% csrf_token %}
+    <label class="label-5em">年份 : </label>
+    <input type="number" name="fmText01" id="fmText01" size="8" value="{{ form_d.fmText01 }}"
+           min="2024" max="2999" required>
+
+    <label class="label-3em">月份 : </label>
+    <select name="fmText02" id="fmText02" style="width:8em;height:1.5em;">
+      <option value="" selected>不指定月份</option>
+    </select>
+  </div>
+</div>
+
+<!-- modal APP -->
+<div id="modalLayer99" class="modalLayer"><div class="modalW40H50 modalShadow">
+  <div class="position-relative" style="width: 100%; height: 100%;">
+  <div class="position-topright text-xlarge pr-1" onclick="hideModalLayer99()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" style="background-color:Brown" viewBox="0 0 512 512">
+      <path fill="White" d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H448c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zm175 79c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z"/>
+    </svg>
+  </div>
+  <div class="position-middle">
+    <p id="modalContent99" class="text-large">訊息內容</p>
+  </div>
+  <div class="position-bottommiddle text-medium">
+    <button type="button" class="btnCss1"
+      onclick="hideModalLayer99()"><i class="fas fa-check-square pr-1"></i>關閉
+    </button>
+  </div>
+  </div>
+</div></div>
+{% endblock %}
+
+{% block javascript %}
+<script src="/static/CDN/DataTables/datatables.min.js"></script>
+{% endblock %}
+
+{% block jsfunction %}
+var gAct = "",
+    gRowIndex = 0,
+    gRow,
+    gMainTable
+;
+$.extend( $.fn.dataTable.defaults, {
+  paging: false,
+  ordering: false,
+  searching: false,
+  info: true,
+  autoWidth: true,
+  dom: '<"wrapper">rti',
+  language: { url: "/static/CDN/DataTables/Chinese-traditional.json" }
+});
+
+function showModalLayer99( msg ) {
+  document.getElementById("modalContent99").innerHTML = msg;
+  document.getElementById("modalLayer99").style.visibility = "visible";
+}
+function hideModalLayer99() {
+  document.getElementById("modalLayer99").style.visibility = "hidden";
+}
+
+function notice(msg, reload_flag) {
+  document.getElementById("modalContent99").innerHTML = msg;
+  document.getElementById("modalLayer99").style.visibility = "visible";
+  if (reload_flag) {
+    $("#modalLayer99 button").attr("onclick", "location.reload();")
+  }
+}
+
+function doUndo() {
+  $("#opUndo").prop("disabled", true);
+}
+
+function doGo() {
+  let formdata = new FormData();
+  let csrf_token = $("input[name='csrfmiddlewaretoken']").val();
+  let fmText01 = $('#fmText01').val();
+  let fmText02 = $('#fmText02').val();
+  if (!fmText01) {
+    notice("【年分】請勿為空", false);
+    return;
+  }
+  if (fmText01 < 2024) {
+    notice("【年分】請勿小於2024年", false);
+    return;
+  }
+  // 取得當前日期
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // 月份從0開始，所以加1，padStart()確保有2位數
+  const day = String(today.getDate()).padStart(2, '0');
+  const formattedDate = `${year}${month}${day}`;
+
+  // 取年份的後兩位數
+  let yearSuffix = fmText01.slice(-2);
+
+  // 檔案名稱格式
+  let fileName = `${formattedDate}_${yearSuffix}.xlsx`;
+
+  formdata.append('fmText01', fmText01);
+  formdata.append('fmText02', fmText02);
+  formdata.append('fmTextOP', 'GO');
+  fetch("/accounting/acc3003/", {
+    method:'POST',
+    headers:{
+      'X-CSRFToken': csrf_token
+    },
+    body:formdata
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('查詢異常');
+    }
+    return response.blob();
+  })
+  .then(blob => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);  // 清理DOM
+  })
+  .catch (error => {
+    console.error("fetch error", error);
+    notice("發生錯誤: " + error.message, false);
+  })
+}
+
+function doFlow(op) {
+  switch ( op ) {
+    case "EXIT":
+      doWindowClose();
+      break;
+    case "MENUMAIN":
+      doWindowClose();
+      break;
+    case "UNDO":
+      doUndo();
+      break;
+    case "GO":
+      doGo();
+      break;
+    default:
+      showModalLayer99("目錄訊息提示：請通知資訊人員！");
+  }
+}
+
+$(document).ready(function (){
+  $("#fmText01").on("input change", function() {
+    $("#opGo").prop("disabled", false);
+  });
+
+  // 月份
+  for (let month = 1; month <= 12; month++) {
+    $('#fmText02').append(new Option(month, month));
+  }
+});
+{% endblock %}

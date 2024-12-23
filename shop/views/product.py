@@ -18,7 +18,7 @@ def Get_Product(category_id=None):
         # }
         
         if category_id:
-            products = Product.objects.filter(category_id=category_id)
+            products = Product.objects.filter(category_id=category_id).order_by('category')
             if products:
                 serializer = ProductSerializer(products, many=True)
                 ret_json = {
@@ -27,7 +27,7 @@ def Get_Product(category_id=None):
             else:
                 ret_json = {'Products': []}
         else:
-            products = Product.objects.all()
+            products = Product.objects.all().order_by('category')
             serializer = ProductSerializer(products, many=True)
             ret_json = {
                 'Products': serializer.data
@@ -35,11 +35,11 @@ def Get_Product(category_id=None):
 
     except Category.DoesNotExist:
         ret_json = {'categories': []}
-        print("Error: Categories data not found.")
+        print("Error: 找不到此商品類別")
         
     except Product.DoesNotExist:
         ret_json = {'Products': []}
-        print("Error: Products data not found.")
+        print("Error: 找不到此商品")
     
     except Exception as e:
         ret_json = {'Products': [], 'error': str(e)}

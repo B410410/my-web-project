@@ -34,17 +34,23 @@ ALLOWED_HOSTS = []
 
 # email設定
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # 郵件伺服器
+EMAIL_HOST = 'smtp.gmail.com'                                       # 郵件伺服器
 EMAIL_PORT = 587
-EMAIL_USE_TLS = True  # TLS 加密
+EMAIL_USE_TLS = True                                                # TLS 加密
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER                                # 默認發送者信箱
 
+# PayPal 設定
+PAYPAL_RECEIVER_EMAIL = 'sb-pqhj535147418@business.example.com'     # PayPal帳號的信箱
+PAYPAL_TEST = True                                                  # 是否為沙盒環境
 
 # 路徑設定，這是 django-filer 處理文件儲存的位置
 DEFAULT_FILE_STORAGE = 'filer.storage.FilerStorage'
 
 # 設定媒體檔案儲存的路徑
-MEDIA_URL = '/media/'  # 網站上存取媒體檔案的 URL 路徑
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')     # 實際儲存圖片的根目錄
+MEDIA_URL = '/media/'                                               # 網站上存取媒體檔案的 URL 路徑
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')                        # 實際儲存圖片的根目錄
 
 # 處理縮圖
 THUMBNAIL_PROCESSORS = (
@@ -59,11 +65,11 @@ FILER_STORAGES = {
         'main': {
             'BACKEND': 'django.core.files.storage.FileSystemStorage',
             'OPTIONS': {
-                'location': os.path.join(BASE_DIR, 'media/filer'),  # 儲存路徑
+                'location': os.path.join(BASE_DIR, 'media/filer'),          # 儲存路徑
                 'base_url': '/media/filer/', 
             },
-            'UPLOAD_TO': 'filer.utils.generate_filename.randomized',  # 使用隨機命名
-            'UPLOAD_TO_PREFIX': 'filer_public',  # 儲存目錄前綴
+            'UPLOAD_TO': 'filer.utils.generate_filename.randomized',        # 使用隨機命名
+            'UPLOAD_TO_PREFIX': 'filer_public',                             # 儲存目錄前綴
         },
         'thumbnails': {
             'BACKEND': 'django.core.files.storage.FileSystemStorage',
@@ -109,8 +115,9 @@ INSTALLED_APPS = [
     'panda_app',
     'captcha',
     'registration',
-    'filer',  # django-filer
+    'filer',                            # django-filer
     'easy_thumbnails',
+    'paypal.standard.ipn',              # django-paypal
 ]
 
 CART_SESSION_ID = 'cart'
@@ -124,8 +131,8 @@ REST_FRAMEWORK = {
     ],
 }
 
-LOGIN_REDIRECT_URL = 'shop:product'  # 注意使用 app_name:url_name 的格式
-LOGIN_URL = 'shop:login'  # 未登入時重定向到登入頁
+LOGIN_REDIRECT_URL = 'shop:product'         # 注意使用 app_name:url_name 的格式
+LOGIN_URL = 'shop:login'                    # 未登入時重定向到登入頁
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -144,7 +151,7 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             # 預設會搜索根目錄下的 templates 資料夾
-            os.path.join(BASE_DIR, 'templates'),  # 根目錄下的 templates 資料夾
+            os.path.join(BASE_DIR, 'templates'),                # 根目錄下的 templates 資料夾
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -215,7 +222,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'shop/static'),  # 將 shop/static 資料夾加入靜態檔案目錄
+    os.path.join(BASE_DIR, 'shop/static'),              # 將 shop/static 資料夾加入靜態檔案目錄
 ]
 
 

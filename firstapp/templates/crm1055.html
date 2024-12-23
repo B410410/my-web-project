@@ -1,0 +1,1216 @@
+{% extends "layout14.html" %}
+
+{% block headtitle %}crm1055客服陌開名單作業{% endblock %}
+{% block apphead %}客服陌開名單作業 crm1055{% endblock %}
+
+{% block applink %}
+<link rel="stylesheet" href="/static/CDN/DataTables/datatables.min.css">
+<link rel="stylesheet" href="/static/dosuper.less.css">
+<link rel="stylesheet" href="/static/dosuper.css">
+<style>
+#container1 {
+  background-color : rgb(250, 227, 169);
+}
+#tableMain {
+    font-size: 17px;
+    width: 100%;
+}
+#tableMain th {
+    line-height: 2;
+    padding: 15px; 
+}
+td{
+  background-color: aliceblue;
+}
+.loading_wrapper{
+  background-color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  right: 0;
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+  z-index: 2;
+}
+
+.asidePromo1, .asidePromo2, .asideComplain, .asideContact {
+  width: 500px;
+  height: 87vh;
+  background-color: #F9E6FF;
+  position: absolute;
+  top: 2.5em;
+  bottom: 0;
+  right: 0;
+  padding: 5px 0;
+  box-shadow: 5px 0 5px rgb(23 23 54 / 60%);
+  transform: translateX(500px);
+  transition: all 0.5s;
+}
+
+.aside-pages {
+  background-color: Purple;
+  color: white;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+.aside-pages:hover {
+  background-color: white;
+  color: purple;
+}
+</style>
+{% endblock %}
+
+{% block menubar %}
+  <button id="opUserPlus" onclick="doFlow('USERADD')"
+          class="px-1 btnTop group-item bg-blue-grey menu-tooltip" disabled>
+    <span class="tooltip-text">新增聯絡人</span>
+    <span><i class="fas fa-user-plus" aria-hidden="true"></i></span>
+  </button>
+{% endblock %}
+
+
+{% block apphtml %}
+<div id="container1">
+  <div class="py-1 input-group">
+    {% csrf_token %}
+    <label class="label-5em">聯絡狀態 :</label>
+    <div class="ml-1 bg-white text-left">
+      <input type="radio" name="fmText01" value="C32" required>
+      <label class="pr-2">14人以下</label>
+
+      <input type="radio" name="fmText01" value="C59" required>
+      <label class="pr-2">未接轉客服</label>
+
+      <input type="radio" name="fmText01" value="C57" required>
+      <label class="pr-2">男生多</label>
+
+      <input type="radio" name="fmText01" value="C27" required>
+      <label class="pr-2">空號</label>
+
+      <input type="radio" name="fmText01" value="C36" required>
+      <label class="pr-2">待更正</label>
+
+      <input type="radio" name="fmText01" value="C29" required>
+      <label class="pr-2">公司結束</label>
+    </div>
+
+    <label class="label-3em">縣市 :</label>
+    <select name="fmText02" id="fmText02" style="width:5em;height:1.5em;">
+    </select>              
+
+    <label class="label-3em">地區 :</label>
+    <select name="fmText03" id="fmText03" style="width:5em;height:1.5em;">
+    </select>
+
+    <label class="label-3em" style="color: red; padding-left: 10px;">※請先選狀態，如果沒有區域選項則代表該區沒有資料，【新竹市】跟【嘉義市】沒有分地區請直接以縣市查詢</label>
+  </div>
+</div>
+
+<!-- 客戶資料 -->
+<div id="container2" class="d-hidden" >
+  <table id="tableMain" >
+    <thead>
+      <tr>
+        <th class="d-none">cust_no</th>
+        <th class="d-none">tel</th>
+        <th class="d-none">fax</th>
+        <th class="d-none">city</th>
+        <th class="d-none">district</th>
+        <th class="d-none">zip</th>
+        <th class="d-none">addr</th>
+        <th class="d-none">industry</th>
+        <th class="d-none">gb_cust_no</th>
+        <th>客戶簡稱</th>
+        <th>公司人數</th>
+        <th>聯絡時間</th>
+        <th>聯絡狀態</th>
+        <th>再聯絡時間</th>
+        <th>公司地址</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</div>
+
+<!-- 聯絡人資料 -->
+<div id="container3" class="d-hidden">
+  {% csrf_token %}
+  <table id="tableDetail">
+    <thead>
+      <tr>
+        <th class="d-none">cust_no</th>
+        <th class="d-none">id</th>
+        <th>聯絡人</th>
+        <th>聯絡時間</th>
+        <th>再聯絡時間</th>
+        <th>聯絡人備註</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</div>
+
+<!-- 聯絡人詳細資料 -->
+<div id="container4" class="mx-1 bg-areaEntry" style="position: absolute; left: 0; top: 1.7em; width: 100%; height: 67vh; z-index: 2; display: none;">
+  <div id="partEntry" class="p-1">
+    <form action="" method="post" id="formMain" enctype="multipart/form-data">{% csrf_token %}
+      <div class="row py-1">
+        <div class="col-11 input-group">
+          <label class="label-8em">公司代號 :</label>
+          <label class="px-2 bg-white" id="CustNo"></label>
+
+          <label class="label-5em">公司名稱 :</label>
+          <label class="px-2 bg-white" id="CustName"></label>
+
+          <label class="label-5em">公司電話 :</label>
+          <input type="text" name="fmText04" id="fmText04" size="16">
+
+        </div>
+        <!-- 聯絡人id -->
+        <input type="hidden" name="ContId" id="ContId">
+
+        <div class="col-1 d-flex">
+          <div id="asideButton" class="input-group">
+            <label id="showAsideContact" class="aside-pages px-2">聯絡記錄</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="row py-1">
+        <div class="col-11 input-group">
+          <label class="label-8em">公司傳真 :</label>
+          <input type="text" name="fmText05" id="fmText05" size="16">
+
+          <label class="label-5em">公司人數 :</label>
+          <input type="text" name="fmText23" id="fmText23" size="6">
+
+          <label class="label-5em">進銷存客戶編號 :</label>
+          <input type="text" name="fmText24" id="fmText24" size="20">
+        </div>
+      </div>
+
+      <div class="row py-1">
+        <div class="input-group">
+          <label class="label-8em">公司地址 :</label>
+      
+          <label class="label-1em">縣市</label>
+          <select name="fmText19" id="fmText19" style="width:5em;height:1.5em;" onchange="updateDistricts()">
+            <option value=""></option>
+            {% for k, v in outline_d.addr_d.items %}
+              <option value="{{ k }}">{{ k }}</option>
+            {% endfor %}
+          </select>
+      
+          <label class="px-1 ml-3 label-3em text-right">行政區</label>
+          <select name="fmText20" id="fmText20" style="width:5em;height:1.5em;">
+            <option value=""></option>
+          </select>
+      
+          <label class="px-1 label-5em text-right">郵遞區號</label>
+          <input type="text" name="fmText21" id="fmText21" size="5" value="" readonly>
+      
+          <label class="px-1 label-3em text-right">地址</label>
+          <input type="text" name="fmText22" id="fmText22" size="40" maxlength="30" value="">
+        </div>
+      </div>
+
+      <div class="row py-1">
+        <div class="col-11 input-group">
+          <label class="label-8em">行業類別 :</label>
+          <div>
+            {% for k, v in outline_d.industry_d.items %}
+            <input type="radio" name="fmText06" value="{{ k }}" required>
+            <label class="pl-1 pr-2">{{ v }}</label>
+            {% endfor %}
+            <input type="radio" name="fmText06" value= "空白" required>
+            <label class="pl-1 pr-2">空白</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="row py-1">
+        <div class="col-11 input-group">
+          <label class="label-7em">聯絡人 :</label>
+          <input type="text" name="fmText07" id="fmText07" size="6" readonly>
+          <label class="label-6em">聯絡人電話 :</label>
+          <input type="text" name="fmText08" id="fmText08" size="16" readonly>
+          <label class="label-1em">＃</label>
+          <input type="text" name="fmText09" id="fmText09" size="6" readonly>
+          <label class="label-3em">手機 :</label>
+          <input type="text" name="fmText10" id="fmText10" size="16" readonly>
+          <label class="label-6em">聯絡人傳真 :</label>
+          <input type="text" name="fmText11" id="fmText11" size="16" readonly>
+        </div>
+      </div>
+
+      <div class="row py-1">
+        <div class="input-group">
+          <label class="label-8em">聯絡狀態 :</label>
+          <div class="ml-1 bg-white text-left" name="fmText12">
+            {% for k, v in outline_d.caption_d.items %}
+            <input type="radio" name="fmText12" value="{{ k }}" required>
+            <label class="pr-2">{{ v }}</label>
+            {% endfor %}
+          </div>
+          <div>
+            <label class="label-8em">再聯絡日期 :</label>
+            <input type="date" name="fmText13" id="fmText13" onClick="data_start_limit()" readonly>
+          </div>
+        </div>
+      </div>
+
+      <div class="row py-1">
+        <label class="label-8em"></label>
+        <div id="remind">
+        </div>
+      </div>
+
+      <div class="row py-1">
+        <div class="input-group">
+          <label class="label-8em"><span style="color:#FF0000">文宣類別 :</span></label>
+          <div class="col-10 ml-1 bg-white text-left wl-9em" id="pomoDocuItems">
+            {% for k, v in outline_d.promo_d.items %}
+            <div class="label float-left">
+              <input type="checkbox" name="fmText14" value="{{ k }}" disabled>
+              <label class="pr-2" style="color:#FF0000">{{ v }}</label>
+            </div>
+            {% endfor %}
+            <div class="label float-left">
+              <input type="checkbox" name="fmText14" value="ZZ" disabled>
+              <label class="pr-2" style="color:#FF0000">訂購單</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row py-1">
+        <div class="input-group">
+          <label class="label-8em"></label>
+          <input class="ml-1" type="checkbox" name="fmText15" id="fmText15" disabled>
+          <label>已傳真</label>
+
+          <input class="ml-4" type="checkbox" name="fmText16" id="fmText16" disabled>
+          <label>已mail</label>
+
+          <input class="ml-4" type="checkbox" name="fmText17" id="fmText17" disabled>
+          <label>已line</label>
+        </div>
+      </div>
+
+      <div class="row py-1">
+        <div class="input-group">
+          <label class="label-9em">聯絡人備註 :</label>
+          <input type="text" name="fmText18" id="fmText18" size="120">
+        </div>
+      </div>
+
+      <div>
+        <div>
+          <label style="color: red; padding-left: 2.5em;">※只有存入【進銷存客戶編號】跟選擇【無效名單】時，資料今天過後才不會再出現，才算處理完成。</label>
+        </div>
+      </div>
+      
+      <!-- 動態滙入：聯絡記錄側邊欄內容 -->
+      <section id="apiCrm1055"></section>
+      
+    </form>
+  </div>
+</div>
+
+<!-- 新增聯絡人 -->
+<div id="partAddContact" class="modalInput">
+  <div class="cfm-modal-content">
+    <div class="input-modal-header h2">新增聯絡人</div>
+    <div class="cfm-modal-body" id="contactbox">
+      <div class="my-1 input-group">
+        <label class="label-5em">公司</label>
+        <input type="text" name="fmText51" id="fmText51" size="50" readonly>
+      </div>
+
+      <div class="my-1 input-group">
+        <label class="label-5em">姓名</label>
+        <input type="text" name="fmText52" id="fmText52" required>
+      </div>
+
+      <div class="my-1 input-group">
+        <label class="label-5em">電話</label>
+        <input type="text" name="fmText53" id="fmText53">
+        <label class="label-2em">#</label>
+        <input type="text" name="fmText54" id="fmText54" size="5">
+      </div>
+
+      <div class="my-1 input-group">
+        <label class="label-5em">手機</label>
+        <input type="text" name="fmText55" id="fmText55">
+      </div>
+
+      <div class="my-1 input-group">
+        <label class="label-5em">部門</label>
+        <input type="text" name="fmText56" id="fmText56">
+      </div>
+
+      <div class="my-1 input-group">
+        <label class="label-5em">職稱</label>
+        <input type="text" name="fmText57" id="fmText57">
+      </div>
+    </div>
+
+    <div class="d-none">
+    <input type="hidden" name="fmTextSOURCE" id="fmTextSOURCE" value="">
+    <input type="hidden" name="fmTextOP" value="SAVE">
+    </div>
+
+    <div class="input-modal-footer">
+      <div class="text-large text-center">
+        <button type="button" class="ml-4 btn-success border border-danger rounded-lg"
+          onclick="document.getElementById('partAddContact').style.display='none';">
+          <i class="fas fa-eraser pr-1"></i>取消
+        </button>
+        <button type="button" class="ml-4 btn-success border border-danger rounded-lg"
+          onclick="doSaveContact()">
+          <i class="fas fa-save pr-1"></i>儲存
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- loading畫面 -->
+<div class="lodaing_main" style="display: none;">
+  <div class="loading_wrapper">
+    <img src="/static/pictures/loading.gif" alt="spinning cat"/>
+
+    <div class="text-center">
+      <h1 id="loading-h1"></h1>
+      <h3 id="loading-h3"></h3>
+    </div>
+    <div class="text-center" style="position: absolute; bottom: 10%">
+      <h4>執行期間請勿關閉此分頁。</h4>
+    </div>
+  </div>
+</div>
+
+<!-- modal APP -->
+<div id="modalLayer99" class="modalLayer"><div class="modalW40H50 modalShadow" style="width: 750px;">
+  <div class="position-relative" style="width: 100%; height: 100%;">
+  <div class="position-topright text-xlarge pr-1" onclick="hideModalLayer99()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" style="background-color:Brown" viewBox="0 0 512 512">
+      <path fill="White" d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H448c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zm175 79c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z"/>
+    </svg>
+  </div>
+  <div class="position-middle">
+    <p id="modalContent99" class="text-large">訊息內容</p>
+  </div>
+  <div class="position-bottommiddle text-medium">
+    <button type="button" class="btnCss1"
+      onclick="hideModalLayer99()"><i class="fas fa-check-square pr-1"></i>關閉
+    </button>
+  </div>
+  </div>
+</div></div>
+{% endblock %}
+
+{% block javascript %}
+<script src="/static/CDN/DataTables/datatables.min.js"></script>
+{% endblock %}
+
+{% block jsfunction %}
+var gAct = "",
+    gRowIndex = 0,
+    gRow,
+    gMainTable
+;
+$.extend( $.fn.dataTable.defaults, {
+  paging: false,
+  ordering: false,
+  searching: false,
+  info: true,
+  autoWidth: true,
+  dom: '<"wrapper">rti',
+  language: { url: "/static/CDN/DataTables/Chinese-traditional.json" }
+});
+
+function showModalLayer99( msg ) {
+  document.getElementById("modalContent99").innerHTML = msg;
+  document.getElementById("modalLayer99").style.visibility = "visible";
+}
+function hideModalLayer99() {
+  document.getElementById("modalLayer99").style.visibility = "hidden";
+}
+
+function notice(msg, reload_flag) {
+  document.getElementById("modalContent99").innerHTML = msg;
+  document.getElementById("modalLayer99").style.visibility = "visible";
+  if (reload_flag) {
+    $("#modalLayer99 button").attr("onclick", "location.reload();")
+  }
+}
+
+function loading_show() {
+  $(".lodaing_main").show();
+}
+
+function loading_hide() {
+  $(".lodaing_main").hide();
+}
+
+// 設定[訂單日期-起始日期]-min值為今天
+function data_start_limit() {
+  let date = new Date();
+  date = date.toISOString().substring(0, 10);
+  $('#fmText13').attr('min', date);
+}
+
+function doUndo() {
+  resetForm();
+  showC2();
+}
+
+function showC2() {
+  $("#container4").hide();
+  $("#container1").show();
+  $("#container2").removeClass("d-hidden");
+  $("#container3").addClass("d-hidden");
+  $("#tableDetail").DataTable().draw();
+  $("#opUndo").prop("disabled", true);
+  $("#opSave").prop("disabled", true);
+  $("#opUserPlus").prop("disabled", true);
+  $("#opSearch").prop("disabled", false);
+}
+
+function doSearch() {
+  let fmText01 = $("input[name='fmText01']:checked").val();
+  let fmText02 = $("#fmText02").val();
+  let fmText03 = $("#fmText03").val();
+  if (!fmText01) {
+    notice("【聯絡狀態】請勿為空", false);
+    return;
+  }
+  if (!fmText02) {
+    notice("【縣市】請勿為空", false);
+    return;
+  }
+  let csrf_token = $("input[name='csrfmiddlewaretoken']").val();
+  let formdata = new FormData();
+  formdata.append('fmText01', fmText01);
+  formdata.append('fmText02', fmText02);
+  formdata.append('fmText03', fmText03);
+  formdata.append('fmTextOP', 'SEARCH');
+
+  fetch('/crm/crm1055/', {
+    method: 'POST',
+    headers: {
+        'X-CSRFToken': csrf_token
+    },
+    body: formdata
+  }).then(response => {
+    loading_show();
+    if (!response.ok) {
+        throw new Error('網路異常');
+    }
+    return response.json();
+  }).then(responseJson => {
+    if (responseJson.status === 'OK') {
+      const $detailTable = $("#tableMain").DataTable({
+        destroy: true,
+        stateSave: false,
+        autoWidth: false,
+        scrollY: "56vh",
+        scrollCollapse: true,
+        dom: '<"wrapper">rtp',
+        order: [[2, "desc"]],
+        data: responseJson.data,
+        columns: [
+          { data: "cust_no", visible: false },
+          { data: "tel", visible: false },
+          { data: "fax", visible: false },
+          { data: "city", visible: false },
+          { data: "district", visible: false },
+          { data: "zip", visible: false },
+          { data: "addr", visible: false },
+          { data: "industry", visible: false },
+          { data: "gb_cust_no", visible: false },
+          { data: "cust_brief", width: "20%", class: "text-center" },
+          { data: "employee_nums", width: "7%", class: "text-center" },
+          { 
+            data: "role2_call_time", width: "10%", 
+            render: function(data) {
+              return data ? data.split("T")[0] : ""; // 只顯示日期部分
+            }
+          },
+          { data: "role2_call_status", width: "18%" },
+          { 
+            data: "rcontact_date", width: "10%", 
+            render: function(data) {
+              return data ? data.split("T")[0] : ""; // 只顯示日期部分
+            }
+          }, 
+          { data: "address", width: "35%" }
+        ],
+      });
+      $("#container2").removeClass("d-hidden");
+    } else {
+      notice(responseJson.msg || "查詢失敗", true);
+    }
+  }).catch(error => {
+    console.error("fetch error", error);
+    notice("發生錯誤: " + error.message, false);
+  }).finally(() => {
+    loading_hide();
+  });
+}
+
+
+
+// 查詢聯絡人資訊(下面那排)
+function doGetContacter(cust_no, csrf_token) {
+  fetch(`/crm/crm1055/?text01=${cust_no}`, {
+    method: 'GET',
+    headers: {
+      'X-CSRFToken': csrf_token
+    }
+  })
+  .then(response => {
+    loading_show();
+    if (!response.ok) {
+      throw new Error('網路異常');
+    }
+    return response.json();
+  })
+  .then(responseJson => {
+    if (responseJson.status !== 'OK') {
+      notice(responseJson.msg || "查詢失敗", false);
+      return;
+    }
+
+    const $detailTable = $("#tableDetail").DataTable({
+      destroy: true,
+      stateSave: false,
+      autoWidth: false,
+      scrollY: "20vh",
+      scrollCollapse: true,
+      dom: '<"wrapper">rtp',
+      data: responseJson.data,
+      columns: [
+        { data: "cust_no", visible: false },
+        { data: "id", visible: false },
+        { data: "contacter", width: "29.5%", class: "text-center" },
+        { data: "last_call_time", width: "10%" },
+        { data: "rcontact_date", width: "10%" }, 
+        { data: "memo", width: "50.5%" }
+      ],
+      language: {
+        emptyTable: "沒有資料"
+      }
+    });
+    $("#container3").removeClass("d-hidden");
+  })
+  .catch(error => {
+    console.error("fetch error", error);
+    notice("發生錯誤: " + error.message, false);
+  })
+  .finally(() => {
+    loading_hide();
+  });
+}
+
+
+
+// 查詢詳細聯絡人資訊(點下面那排後跳出的頁面)
+function doQuery(cust_no, cont_id) {
+  $("#opUndo").prop("disabled", false);
+  let selectedMainRow = $("#tableMain tbody tr.selected");
+  let dataMain = null;
+
+  if (selectedMainRow.length) {
+      dataMain = $('#tableMain').DataTable().row(selectedMainRow).data();
+  } else {
+      notice("請選擇一行資料", false);
+      return;
+  }
+
+  let sideView = {
+    csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val(),
+    fmText81: cust_no,
+    fmText82: cont_id,
+    fmTextOP: "QUERY"
+  };
+  $("#apiCrm1055").load("/crm/load1031/", sideView).show();
+
+  // 如果沒有聯絡人
+  if (!cont_id) {
+    resetForm();
+    $("#CustNo").text(dataMain['cust_no']);
+    $("#CustName").text(dataMain['cust_brief']);
+    var selectedIndustry = dataMain['industry'];
+    setDefaultIndustry(selectedIndustry);
+    $("#fmText04").val(dataMain['tel']);
+    $("#fmText05").val(dataMain['fax']);
+    $("#fmText19").val(dataMain['city']);
+    updateDistricts(dataMain['city']);
+    $("#fmText20").val(dataMain['district']);
+    $("#fmText21").val(dataMain['zip']);
+    $("#fmText22").val(dataMain['addr']);
+    $("#fmText23").val(dataMain['employee_nums']);
+    $("#fmText24").val(dataMain['gb_cust_no']);
+    $("#container1").hide();
+    $("#container2").addClass("d-hidden");
+    $("#container3").addClass("d-hidden");
+    $("#container4").show();
+    $("#opSave").prop("disabled", false);
+    $("#opUserPlus").prop("disabled", false);
+    $("#opSearch").prop("disabled", true);
+    return;
+  }
+
+  // 如果有聯絡人
+  let csrf_token = $("input[name='csrfmiddlewaretoken']").val();
+  let formdata = new FormData();
+  formdata.append('fmTextCUSNO', cust_no);
+  formdata.append('fmTextCONID', cont_id);
+  formdata.append('fmTextOP', 'QUERY');
+
+  fetch('/crm/crm1055/', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrf_token
+    },
+    body: formdata
+  }).then(response => {
+    loading_show();
+    if (!response.ok) {
+      throw new Error('網路異常');
+    }
+    return response.json();
+  }).then(responseJson => {
+    if (responseJson.status === 'OK') {
+      fillForm(responseJson.data);
+    } else {
+      notice(responseJson.msg || "查詢失敗", false);
+    }
+  }).catch(error => {
+    console.error("fetch error", error);
+    notice("發生錯誤: " + error.message, false);
+  })
+  .finally(() => {
+    loading_hide();
+  });
+}
+
+// 處理聯絡人詳細資料
+function fillForm(data) {
+  resetForm();
+  $("#fmText04, #fmText05, #fmText08, #fmText09, #fmText10, #fmText11").prop("readonly", false);
+  $("#CustNo").text(data.cust_no);
+  $("#CustName").text(data.cust_brief);
+  $("#ContId").val(data.cont_id);
+  $("#fmText04").val(data.cust_tel);
+  $("#fmText05").val(data.cust_fax);
+  $("#fmText07").val(data.contacter);
+  $("#fmText08").val(data.cont_tel);
+  $("#fmText09").val(data.cont_tel_ext);
+  $("#fmText10").val(data.mobile);
+  $("#fmText11").val(data.cont_fax);
+  $("#fmText19").val(data.city);
+  updateDistricts(data.city);
+  $("#fmText20").val(data.district);
+  $("#fmText21").val(data.zip);
+  $("#fmText22").val(data.addr);
+  $("#fmText23").val(data.employee_nums);
+  $("#fmText24").val(data.gb_cust_no);
+
+  // 預設行業別
+  setDefaultIndustry(data.industry);
+
+  $("#container1").hide();
+  $("#container2").addClass("d-hidden");
+  $("#container3").addClass("d-hidden");
+  $("#container4").show();
+  $("#opSave").prop("disabled", false);
+  $("#opUserPlus").prop("disabled", false);
+  $("#opSearch").prop("disabled", true);
+}
+
+function resetForm() {
+  $("#CustNo").text('');
+  $("#CustName").text('');
+  $("#fmText04").val('');
+  $("#fmText05").val('');
+  $("#fmText07").val('').prop("readonly", true);
+  $("#fmText08").val('').prop("readonly", true);
+  $("#fmText09").val('').prop("readonly", true);
+  $("#fmText10").val('').prop("readonly", true);
+  $("#fmText11").val('').prop("readonly", true);
+  $("#fmText18").val('');
+  $("#fmText19").val('');
+  $("#fmText20").val('');
+  $("#fmText21").val('');
+  $("#fmText22").val('');
+  $("#fmText23").val('');
+  $("#fmText24").val('');
+
+  // 重置行業類別的選擇
+  $("input[name='fmText06']").prop("checked", false);
+
+  // 重置聯絡狀態的選擇
+  $("input[name='fmText12']").prop("checked", false);
+  
+  // 清除再聯絡日期
+  $("#fmText13").val('').prop("readonly", true);
+
+  // 重置文宣類別的選擇
+  $("input[name='fmText14']").prop("checked", false);
+
+  // 重置傳送狀態的選擇
+  $("#fmText15").prop("checked", false);
+  $("#fmText16").prop("checked", false);
+  $("#fmText17").prop("checked", false);
+  
+  // 清空提示訊息
+  $("#remind").empty();
+}
+
+// 預設勾選行業別
+function setDefaultIndustry(industryValue) {
+  // 將 industryValue 轉換為字符串
+  const industryStr = String(industryValue);
+  // console.log('Received industryValue:', industryStr);
+
+  // 判斷是否需要選擇空白選項
+  if (industryStr === 'null' || !$(`input[name="fmText06"][value="${industryStr}"]`).length) {
+      $('input[name="fmText06"][value="空白"]').prop('checked', true);
+      return;
+  }
+
+  // 選擇對應的行業別
+  $('input[name="fmText06"]').each(function() {
+      const value = String($(this).val());
+      console.log('Checking value:', value);
+      if (value === industryStr) {
+          $(this).prop('checked', true);
+      }
+  });
+}
+
+
+// 聯絡狀態判段及確認使用者是否有填入必要的資料
+function CheckStatus() {
+  const selectedStatus = $('input[name="fmText12"]:checked');
+  
+  if (!selectedStatus.length) {
+    return showMsg('請選擇【聯絡狀態】');
+  }
+  
+  const status = selectedStatus.val();
+  if (status === 'C62') {
+    const isAnyChecked = ['#fmText15', '#fmText16', '#fmText17'].some(selector => $(selector).is(":checked"));
+    const fmText14Checked = $('#pomoDocuItems input[name="fmText14"]:checked').length > 0;
+    const fmText07 = $('#fmText07').val();
+
+    if (!fmText07) {
+      return showMsg('請加入【聯絡人資料】才可存檔。');
+    }
+    if (!fmText14Checked) {
+      return showMsg('請至少勾選一種【文宣】才可存檔。');
+    }
+    if (!isAnyChecked) {
+      return showMsg('請至少勾選【已傳真】、【已mail】或【已line】任一項才可存檔。');
+    }
+
+  } else if (status === 'C14') {
+    const contactDate = $('#fmText13').val();
+    if (!contactDate) {
+      return showMsg('請填入【再聯絡日期】');
+    }
+  }
+  return true;
+}
+function showMsg(message) {
+  notice(message, false);
+  return false;
+}
+
+
+function doSave() {
+  if (CheckStatus()) {
+    let csrf_token = $("input[name='csrfmiddlewaretoken']").val();
+    let formdata = new FormData();
+    formdata.append('CustNo', $('#CustNo').text()); // 公司代號
+    formdata.append('CustName', $('#CustName').text()); // 公司名稱
+    formdata.append('ContId', $('#ContId').val()); // 聯絡人代號
+    formdata.append('fmText04', $('#fmText04').val()); // 公司電話
+    formdata.append('fmText05', $('#fmText05').val()); // 公司傳真
+    formdata.append('fmText06', $('input[name="fmText06"]:checked').val()); // 行業類別
+    formdata.append('fmText07', $('#fmText07').val()); // 聯絡人
+    formdata.append('fmText08', $('#fmText08').val()); // 聯絡人電話
+    formdata.append('fmText09', $('#fmText09').val()); // 分機
+    formdata.append('fmText10', $('#fmText10').val()); // 手機
+    formdata.append('fmText11', $('#fmText11').val()); // 聯絡人傳真
+    formdata.append('fmText12', $('input[name="fmText12"]:checked').val()); // 聯絡狀態
+    formdata.append('fmText13', $('#fmText13').val()); // 再聯絡日期
+    
+    // 獲取所有選中的文宣類別
+    const promoCheckedValues = $('#pomoDocuItems input[name="fmText14"]:checked').map(function() {
+      return $(this).val();
+    }).get();
+    formdata.append('fmText14', promoCheckedValues.join(';')); // 將選中的值以分號分隔的形式加入
+    
+    formdata.append('fmText15', $('#fmText15').is(':checked') ? 'true' : 'false'); // 已傳真
+    formdata.append('fmText16', $('#fmText16').is(':checked') ? 'true' : 'false'); // 已mail
+    formdata.append('fmText17', $('#fmText17').is(':checked') ? 'true' : 'false'); // 已line
+    formdata.append('fmText18', $('#fmText18').val()); // 聯絡人備註
+    formdata.append('fmText19', $('#fmText19').val()); // 縣市
+    formdata.append('fmText20', $('#fmText20').val()); // 行政區
+    formdata.append('fmText21', $('#fmText21').val()); // 郵遞區號
+    formdata.append('fmText22', $('#fmText22').val()); // 地址
+    formdata.append('fmText23', $('#fmText23').val()); // 公司人數
+    formdata.append('fmText24', $('#fmText24').val()); // 進銷存客戶編號
+
+    formdata.append('fmTextOP', 'SAVE');
+    fetch('/crm/crm1055/', {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrf_token
+      },
+      body: formdata
+    }).then(response => {
+      loading_show();
+      if (!response.ok) {
+        throw new Error('網路異常');
+      }
+      return response.json();
+    }).then(responseJson => {
+      if (responseJson.status === 'OK') {
+        notice(responseJson.msg, false);
+
+        doSearch();
+        $("#container1").show();
+        $("#container3").addClass('d-hidden');
+        $("#container4").hide();
+        $("#opSave").prop("disabled", true);
+        $("#opUserPlus").prop("disabled", true);
+        $("#opSearch").prop("disabled", false);
+
+      } else {
+        notice(responseJson.msg, false);
+      }
+    }).catch(error => {
+      console.error("fetch error", error);
+      notice("發生錯誤: " + error.message, false);
+    })
+    .finally(() => {
+      loading_hide();
+    });
+  }
+}
+
+// 新增客戶的聯絡人
+function doAddContacter() {
+  $("#partAddContact").show();
+  $("#fmText51").val( $("#CustName").text());
+  $("#fmText52").val( "" );
+  $("#fmText52").prop('required',true);
+  $("#fmText53").val( "" );
+  $("#fmText54").val( "" );
+  $("#fmText55").val( "" );
+  $("#fmText56").val( "" );
+  $("#fmText57").val( "" );
+}
+
+// 儲存新增的聯絡人
+function doSaveContact() {
+  const fmText52 = $('#fmText52').val();
+  if (!fmText52) {
+    notice('請填入【姓名】', false);
+    return;
+  }
+  
+  let csrf_token = $("input[name='csrfmiddlewaretoken']").val();
+  let formdata = new FormData();
+  formdata.append('cust_no', $('#CustNo').text());
+  formdata.append('fmText51', $('#fmText51').val());
+  formdata.append('fmText52', fmText52);
+  formdata.append('fmText53', $('#fmText53').val());
+  formdata.append('fmText54', $('#fmText54').val());
+  formdata.append('fmText55', $('#fmText55').val());
+  formdata.append('fmText56', $('#fmText56').val());
+  formdata.append('fmText57', $('#fmText57').val());
+  formdata.append('fmTextOP', 'CONTACT');
+
+  loading_show();
+
+  fetch('/crm/crm1055/', {
+    method: 'POST',
+    headers: {
+        'X-CSRFToken': csrf_token
+    },
+    body: formdata
+  })
+  .then(response => {
+      if (!response.ok) {
+        throw new Error('網路異常');
+      }
+      return response.json();
+  })
+  .then(responseJson => {
+    if (responseJson.status === "OK") {
+        $("#ContId").val(responseJson.cont_id); // 聯絡人id
+        console.log(responseJson.cont_id);
+        $("#fmText07").val(fmText52); // 聯絡人
+        $("#fmText08").val($('#fmText53').val()); // 聯絡人電話
+        $("#fmText09").val($('#fmText54').val()); // 分機
+        $("#fmText10").val($('#fmText55').val()); // 手機
+        $("#fmText11").val(''); // 分機清空
+        notice(responseJson.msg);
+    } else {
+      notice(responseJson.msg);
+    }
+  })
+  .catch(error => {
+    console.error("fetch error", error);
+    notice("發生錯誤: " + error.message, false);
+  })
+  .finally(() => {
+    loading_hide();
+    $("#partAddContact").hide();
+  });
+}
+
+
+
+// 全自送區資料整理
+const addrData = {
+  {% for city, districts in outline_d.addr_d.items %}
+    "{{ city }}": {
+      {% for district, zip in districts.items %}
+      "{{ district }}": "{{ zip }}"{% if not loop.last %},{% endif %}
+      {% endfor %}
+    },
+  {% endfor %}
+};
+
+// 以 縣市(fmText19) 去設定 行政區(fmText20) 的選項內容
+function updateDistricts(citySelect) {
+  //citySelect = $('#fmText19').val();
+  const districtSelect = $('#fmText20');
+  const zipCodeInput = $('#fmText21');
+
+  // 清空行政區選項
+  districtSelect.html('<option value=""></option>');
+  zipCodeInput.val(''); // 清空郵遞區號欄位
+
+  if (citySelect && addrData[citySelect]) {
+    for (const district in addrData[citySelect]) {
+      const option = $('<option></option>').val(district).text(district);
+      districtSelect.append(option);
+    }
+  }
+}
+
+function doFlow(op) {
+  switch ( op ) {
+    case "EXIT":
+      doWindowClose();
+      break;
+    case "MENUMAIN":
+      doWindowClose();
+      break;
+    case "UNDO":
+      doUndo();
+      break;
+    case "SEARCH":
+      doSearch();
+      break;
+    case "SAVE":
+      doSave();
+      break;
+    case "USERADD":
+      doAddContacter();
+      break;
+    default:
+      showModalLayer99("目錄訊息提示：請通知資訊人員！");
+  }
+}
+
+// 當滑鼠進入顯示聯絡紀錄的按鈕時，顯示側邊欄
+$("#showAsideContact").on("mouseenter", function() {
+    $(".asideContact").css("transform", "translateX(0)");
+});
+
+// 當點擊其他地方時，隱藏側邊欄
+$(document).on("click", function(event) {
+    // 檢查點擊的元素是否不在顯示按鈕或側邊欄內
+    if (!$(event.target).closest("#showAsideContact").length && !$(event.target).closest(".asideContact").length) {
+        $(".asideContact").css("transform", "translateX(1000px)");
+    }
+});
+
+
+$(document).ready(function() {
+  $("#opSearch").prop("disabled", false);
+  $("#fmText02, #fmText03").prop("disabled", true);
+
+  
+  $("#fmText19").on("change", function() {
+    const citySelect = this.value;
+    updateDistricts(citySelect);
+  });
+
+  // 當選擇行政區後更新郵遞區號
+  $("#fmText20").on("change", function() {
+    const citySelect = $('#fmText19').val();
+    const District = this.value;
+    const zip = $('#fmText21');
+  
+    if (District) {
+      zip.val(addrData[citySelect][District]); // 根據選擇的行政區更新郵遞區號
+    } else {
+      zip.val('');
+    }
+  });  
+  
+
+  // 以狀態去判斷哪些區域能選擇(讓使用者最開始選擇條件的部分，且沒有資料的地區不會出現)
+  const cityDistrictStatus = {
+    {% for city, districts in data_dl.items %}
+    "{{ city }}": {
+      {% for district, statuses in districts.items %}
+      "{{ district }}": [
+        {% for status in statuses %}
+        "{{ status }}"{% if not loop.last %},{% endif %}
+        {% endfor %}
+      ],
+      {% endfor %}
+    },
+    {% endfor %}
+  };
+
+  $("input[name='fmText01']").on("change", function() {
+    const status = $("input[name='fmText01']:checked").val();
+    
+    if (status) {
+      $("#fmText02").empty().prop("disabled", true);
+      $("#fmText03").empty().prop("disabled", true);
+      $("#statusContainer").empty(); 
+
+      // 重新加載縣市
+      $("#fmText02").append('<option value="" selected></option>');
+      for (const city in cityDistrictStatus) {
+        const districts = cityDistrictStatus[city];
+        const hasStatus = Object.keys(districts).some(district => districts[district].includes(status));
+
+        if (hasStatus) {
+          $("#fmText02").prop("disabled", false);
+          $("#fmText02").append(`<option value="${city}">${city}</option>`);
+        }
+      }
+    } else {
+      $("#fmText02, #fmText03").prop("disabled", true);
+    }
+  });
+
+  $("#fmText02").on("change", function() {
+    const city = $(this).val();
+    const districts = cityDistrictStatus[city] || {};
+    
+    $("#fmText03").empty().append('<option value="" selected></option>');
+    for (const district in districts) {
+      if (districts[district].includes($("input[name='fmText01']:checked").val())) {
+        $('#fmText03').append(`<option value="${district}">${district}</option>`);
+      }
+    }
+    $("#fmText03").prop("disabled", false);
+  });
+
+  // 聯絡狀態判斷及對應的處理
+  $('input[name=fmText12]').on('change', function() {
+      const status = $(this).val();
+      const isC14 = status === 'C14';
+      const isC62 = status === 'C62';
+      const isC63 = status === 'C63';
+  
+      // 清除已選的文宣和其他選項
+      $("input[name='fmText14'], input[name='fmText15'], input[name='fmText16'], input[name='fmText17']").prop("checked", false);
+  
+      // 設置再聯絡日期的readonly
+      $('#fmText13').prop('readonly', !isC14).val('');
+  
+      // 控制勾選和禁用狀態
+      $("input[name='fmText14'], input[name='fmText15'], input[name='fmText16'], input[name='fmText17']").prop('disabled', !isC62);
+  
+      // 清空提醒區域
+      $('#remind').empty();
+  
+      if (isC62) {
+          $('#remind').append(`<label style="color: #FF0000;">※請至少選 1 種【文宣】跟 任一【已傳真】、【已mail】、【已line】選項，且要有【聯絡人】才可存檔</label>`);
+      } else if (isC14) {
+          $('#remind').append(`<label style="color: #FF0000;">※請填入【再聯絡時間】</label>`);
+      } else if (isC63) {
+          const msg = "如果選擇【無效名單】後存檔，此客戶將永遠從名單中移除。" +
+                      "<br /><span style='color: red;'> <i class='fas fa-exclamation-triangle' style='color: orange;'></i> " +
+                      "請在聯絡人備註說明無效原因。</span>";
+          notice(msg, false);
+      }
+  });
+
+  // 查詢客戶聯絡人(下面那排的資料)
+  $("#tableMain tbody").on('click', 'tr', function() {
+    $("#tableMain tbody tr.selected").removeClass("selected");
+    $(this).addClass("selected");
+    const status = $(this).find('td:eq(3)').text();
+    if (status === '無效名單') {
+      notice('已設為無效名單。');
+      $("#container4").addClass('d-hidden');
+      return;
+    }
+    if (status.includes('已有進銷存編號')) {
+      notice('該客戶已存在進銷存編號。');
+      return;
+    } 
+    let data = $('#tableMain').DataTable().row($(this)).data();
+    let cust_no = data['cust_no'];
+    let csrf_token = $("input[name='csrfmiddlewaretoken']").val();
+    
+    // 查詢
+    doGetContacter(cust_no, csrf_token);
+  });
+
+  // 查詢客戶聯絡人詳細資料
+  $("#tableDetail tbody").on('click', 'tr', function() {
+    $("#tableDetail tbody tr.selected").removeClass("selected");
+    $(this).addClass("selected");
+  
+    let cust_no = null;
+    let cont_id = null; 
+    
+    if ($(this).find("td:eq(0)").text() === "沒有資料") {
+      let selectedMainRow = $("#tableMain tbody tr.selected");
+      if (selectedMainRow.length) {
+        let dataMain = $('#tableMain').DataTable().row(selectedMainRow).data();
+        cust_no = dataMain['cust_no'];
+      } else {
+        notice("請選擇一行資料", false);
+        return;
+      }
+    } else if ($(this).find("td:eq(0)").text() !== "沒有資料") {
+      let dataDetail = $('#tableDetail').DataTable().row($(this)).data();
+      cust_no = dataDetail['cust_no'];
+      cont_id = dataDetail['id'];
+    } else {
+      notice("資料獲取失敗", false);
+      return;
+    }
+    
+    // 查詢
+    doQuery(cust_no, cont_id);
+  });
+});
+
+{% endblock %}

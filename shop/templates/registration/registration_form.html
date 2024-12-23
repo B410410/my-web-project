@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}註冊{% endblock %}
+{% block content %}
+<div class="container">
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+    <div class="row">
+        <div class="col-md-12">
+            <h3 class="alert alert-primary">註冊帳號</h3>
+        </div>
+    </div>
+    <form method="post" action=".">
+        {% csrf_token %}
+        <table class="table table-striped">
+            {{ form.as_table }}
+        </table>
+        <input type="submit" value="註冊"></br/>
+    </form>
+</div>
+{% endblock %}

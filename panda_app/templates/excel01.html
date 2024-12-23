@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel01</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="input-group" style="background-color: rgb(250, 227, 169);">
+        {% csrf_token %}
+        <label class="label-5em" style="padding-left: 5em; font-size: 1.5em;">選擇Excel檔案</label>
+        <input type="file" name="uploadFiles" id="uploadFiles" style="background-color: rgb(255, 255, 255);" accept=".xlsx">
+    </div>
+
+    <div style="margin-top: 20px; text-align: center;">
+        <button onclick="doUpload()" style="padding: 10px 20px; font-size: 1.2em; background-color: #4CAF50; color: white; border: none; border-radius: 5px;">上傳檔案</button>
+    </div>
+
+    <script>
+        function doUpload() {
+            let csrf_token = $("input[name='csrfmiddlewaretoken']").val();
+            // 從 jQuery 物件中取出原生 DOM 元素的檔案
+            let uploadFiles = $('#uploadFiles')[0].files;
+            if (uploadFiles.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '請選擇檔案',
+                    text: '',
+                    confirmButtonText: '確定'
+                });
+                return;
+            }
+            let file = uploadFiles[0];
+            let formdata = new FormData();
+            formdata.append('Excel', file);
+
+            fetch("/panda/excel01/", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrf_token
+                },
+                body: formdata
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('網路異常');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Excel練習.xlsx';
+                a.click();
+                URL.revokeObjectURL(url);
+            })
+            .catch(e => {
+                console.error('下載失敗:', e);
+            });
+        }
+    </script>
+</body>
+</html>

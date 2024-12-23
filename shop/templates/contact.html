@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}聯絡客服{% endblock %}
+
+{% block extra_css %}
+    <style>
+        #responseMessage {
+            display: none;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 50px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        /* 成功訊息 */
+        #responseMessage.alert-success {
+            background-color: #28a745;
+            color: rgb(0, 0, 0);
+            border: 2px solid #218838;
+        }
+
+        /* 錯誤訊息 */
+        #responseMessage.alert-danger {
+            background-color: #dc3545;
+            color: rgb(0, 0, 0);
+            border: 2px solid #c82333;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h3>寫信給客服</h3>
+        </div>
+        <div class="card-body">
+            <form id="contactForm" action="." method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}
+            </form>
+        </div>
+        <div class="card-footer">
+            <button type="button" class="btn btn-primary" id="submitBtn">送出</button>
+            <div id="responseMessage" style="display: none;" class="mt-3"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        $(document).ready(function() {
+            $('#submitBtn').on('click', function(e) {
+                // e.preventDefault();
+                let csrf_token = $("input[name='csrfmiddlewaretoken']").val();
+                let formdata = new FormData($('#contactForm')[0]);
+                
+                fetch('/shop/contact/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrf_token
+                    },
+                    body: formdata
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error('網路異常');
+                    }
+                    return response.json();
+                }).then(json => {
+                    console.log(json);
+                    if (json.status === 'OK') {
+                        $('#responseMessage').removeClass('alert-danger').addClass('alert-success').text(json.msg).show();
+                    } else {
+                        $('#responseMessage').removeClass('alert-success').addClass('alert-danger').text(json.msg).show();
+                    }
+                }).catch(error => {
+                    console.error('fetch error', error);
+                    $('#responseMessage')
+                        .removeClass('alert-success').addClass('alert-danger').text('發生錯誤:' + error.message).show();
+                });
+            });
+        });
+    </script>
+{% endblock %}

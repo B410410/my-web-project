@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MyWeb{% endblock %}</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+    <style>
+    .custom-green {
+        color: #51f878 !important;
+    }
+    .custom-red {
+        color: #ff4e4e !important;
+    }
+    </style>
+</head>
+<body>
+    <!-- 固定在上方的導覽列 -->
+    <nav class="navbar navbar-dark bg-dark navbar navbar-expand-lg navbar-light bg-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">MyWeb</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <!-- Home -->
+                    <li class="nav-item" style="padding-left:20px;">
+                        <a class="nav-link active text-nowrap" aria-current="page" href="{% url 'shop:product' %}">首頁</a>
+                    </li>
+                    <!-- Category -->
+                    <li class="nav-item dropdown">
+                        <a class=" nav-link dropdown-toggle text-white" href="#" data-toggle="dropdown">
+                            商品類別
+                        <span class="'caret"></span></a>
+                        <ul class="dropdown-menu">
+                            {% if categories %} 
+                                {% for category in categories %} 
+                                    <li><a class="dropdown-item" href="{% url 'shop:product_category' category.id %}">{{ category.name }}</a></li>
+                                {% endfor %} 
+                            {% else %} 
+                                <li>No categories found</li>
+                            {% endif %}
+                        </ul>
+                    </li>
+
+                    {% if request.user.is_authenticated %}
+                    <!-- Cart -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white text-nowrap" href="{% url 'shop:cart' %}">檢視購物車</a>
+                    </li>
+                    <!-- UserData -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white text-nowrap" href="{% url 'shop:myorders' %}">檢視訂單</a>
+                    </li>
+                    <!-- UserData -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white text-nowrap" href="{% url 'shop:profile' %}">帳號資料</a>
+                    </li>
+                    <!-- Contact-->
+                    <li class="nav-item">
+                        <a class="nav-link text-white text-nowrap" href="{% url 'shop:contact' %}">聯絡客服</a>
+                    </li>
+                    <!-- Logout -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white text-nowrap" href="{% url 'shop:logout' %}">登出</a>
+                    </li>
+                    <!-- User -->
+                    <li class="nav-item" style="padding-left:200px;">
+                        <span class="navbar-text custom-green text-nowrap"> 帳號 : {{ request.user.username }} 已登入 </span>
+                    </li>
+                    {% else %}
+                    <!-- Login -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white text-nowrap" href="{% url 'shop:login' %}">登入</a>
+                    </li>
+                    <!-- Register -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white text-nowrap" href="/accounts/register/">註冊</a>
+                    </li>
+                    <!-- User -->
+                    <li class="nav-item" style="padding-left:550px;">
+                        <span class="navbar-text custom-red text-nowrap"> 帳號 : 未登入 </span>
+                    </li>
+                    {% endif %}
+                </ul>
+                <form class="d-flex" style="padding-left:30px;">
+                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success border border-white text-white text-nowrap" type="submit">查詢</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="margin-top: 80px;">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

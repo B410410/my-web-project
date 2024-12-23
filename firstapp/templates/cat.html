@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隨機貓咪圖片</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- 引入 jQuery -->
+</head>
+<body>
+    <form method="post">
+        {% csrf_token %}
+        <button id="getCatBtn">顯示隨機貓咪圖片</button>
+    </form>
+    <div id="catContainer"></div>
+
+    <script>
+        // 當按鈕被點擊時觸發 fetch 請求
+        $('#getCatBtn').on('click', function() {
+            event.preventDefault();  
+            console.log("按鈕被點擊了！");
+            // 取得 CSRF Token
+            const csrftoken = $('[name=csrfmiddlewaretoken]').val();
+
+            // 使用 fetch 發送 API 請求
+            fetch('{% url "app:cat" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('網路異常');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("返回的數據:", data);  // 確保數據返回正確
+
+                // 檢查是否返回了圖片 URL
+                if (data.cat_image_url) {
+                    const img = $('<img>', {
+                        src: data.cat_image_url + '?t=' + new Date().getTime(),  // 加上隨機參數避免緩存
+                        alt: '隨機貓咪圖片',
+                        style: 'max-width: 100%; max-height: 500px; display: block; margin: 0 auto;'
+                    });
+
+                    // 清空現有圖片（如果有）
+                    $('#catContainer').empty();  // 清空容器
+                    $('#catContainer').append(img);  // 顯示新圖片
+                } else {
+                    console.log("圖片 URL 不存在");
+                }
+            })
+            .catch(error => console.log("發生錯誤:", error));  // 捕捉錯誤
+        });
+    </script>
+</body>
+</html>

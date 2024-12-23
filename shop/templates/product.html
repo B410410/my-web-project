@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+
+{% block title %}產品列表{% endblock %}
+
+{% block extra_css %}
+<style>
+.text-dark-orange { 
+    color: rgb(202, 84, 0);
+}
+.sticky-cart {
+    position: fixed; /* 使用固定定位 */
+    top: 210px;
+    right: 20px;
+    width: 500px;
+    max-height: 70vh;
+    overflow-y: auto; /* 啟用垂直滾動條 */
+    z-index: 1000;
+}
+table {
+    table-layout: auto;
+    width: 100%;
+}
+th {
+    writing-mode: horizontal-tb; /* 使標題為水平 */
+    text-align: center;  /* 文字置中 */
+    vertical-align: middle; /* 文字垂直置中 */
+    padding: 12px; /* 標題的內邊距 */
+}
+td {
+    padding: 15px;
+    text-align: center;
+    vertical-align: middle; /* 讓表格內容垂直居中 */
+}
+td img {
+    max-width: 120px;
+    max-height: 80px;
+    object-fit: cover; /* 讓圖片保持比例並填充框 */
+}
+.quantity-input {
+    width: 80px;
+    margin: 0 auto; /* 數量輸入框水平居中 */
+}
+.remove-item {
+    padding: 5px 10px; /* 按鈕的內邊距 */
+    font-size: 14px; 
+}
+.text-right {
+    margin-top: 20px;
+}
+.btn-primary {
+    font-size: 16px;
+    padding: 10px 20px; /* 結帳按鈕的內邊距 */
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="/">購物網站</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'shop:cart' %}" style="color: rgb(10, 88, 255);">購物車商品數量: <span id="cart-count">{{ cart_count }}</span></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-8">
+            {% if data.error %}
+            <div class="alert alert-danger text-center">
+                <strong>出現錯誤：</strong> {{ data.error }}
+            </div>
+            {% endif %}
+    
+            {% if data.Products %}
+            <h1 class="text-center mb-4">產品列表</h1>
+            {% endif %}
+            <div class="row">
+                {% for product in data.Products %}
+                <div class="col-12 col-sm-6 col-md-4 mb-4">
+                    <div class="card">
+                        <img src="{{ MEDIA_URL }}{{ product.image }}" alt="{{ product.name }}" class="card-img-top img-fluid" 
+                        style="max-width: 200px; max-height: 100px;" onerror="this.onerror=null;this.src='https://via.placeholder.com/250';">
+                        <div class="card-body">
+                            <h5 class="card-title"><a href='{% url "shop:product_detail" product.slu %}'>{{ product.name }}</a></h5>
+                            <p class="card-text">{{ product.description }}</p>
+                            <p class="card-text">價格: ${{ product.price|floatformat:0 }}</p>
+                            <p class="card-text">分類: {{ product.category }}</p>
+                            <p class="card-text">庫存:
+                                {% if product.stock >= 5 %}
+                                    <span class="text-success" id="stock-{{ product.slu }}">{{ product.stock }}</span> 
+                                {% elif product.stock > 0 %}
+                                    <span class="text-dark-orange" id="stock-{{ product.slu }}">{{ product.stock }}</span>
+                                {% else %}
+                                    <span class="text-danger" id="stock-{{ product.slu }}">缺貨</span>
+                                {% endif %}
+                            </p>
+    
+                            <div class="form-group">
+                                <label for="quantity-{{ product.slu }}">數量:</label>
+                                <input type="number" class="form-control" id="quantity-{{ product.slu }}" name="quantity" min="0" value="0">
+                            </div>
+    
+                            <button class="btn btn-success add-to-cart" data-slu="{{ product.slu }}">{% csrf_token %}
+                                加入購物車
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="col-12 text-center" style="font-size: 40px; font-weight: bold;">沒有商品</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-4 sticky-cart">
+            <div class="card">
+                <div class="card-body">
+                    <h2>購物車</h2>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>商品名稱</th>
+                                <th>數量</th>
+                                <th>總價</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart-table-body">
+                            {% csrf_token %}
+                            {% for item in cart_items %}
+                            <tr id="cart-item-{{ item.slu }}">
+                                <td>{{ item.name }}</td>
+                                <td>
+                                    <input type="number" class="form-control quantity-input" 
+                                           data-slu="{{ item.slu }}" 
+                                           value="{{ item.quantity }}" min="1">
+                                </td>
+                                <td class="product-stock" style="display: none;">{{ item.stock }}</td>
+                                <td class="total-item-price">${{ item.total|floatformat:0 }}</td>
+                                <td>
+                                    <button class="btn btn-danger remove-item" 
+                                            data-slu="{{ item.slu }}">
+                                        刪除
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">沒有商品</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="text-right">
+                        <h3>總金額: $<span id="total-price">{{ cart_total }}</span></h3>
+                        <a href="{% url 'shop:cart' %}" class="btn btn-primary">確認結帳</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('.add-to-cart').on('click', function() {
+        let slu = $(this).data('slu'); // 編號
+        let quantity = $(`#quantity-${slu}`).val(); // 數量
+        let stock  = $(`#stock-${slu}`).text();
+        console.log('quantity',quantity);
+        console.log('stock', stock);
+
+        let csrf_token = $('input[name="csrfmiddlewaretoken"]').val();
+        let formdata = new FormData();
+        let data = {
+            slu: slu,
+            quantity: quantity
+        };
+
+        if (quantity <= 0) {
+            alert('請選擇數量');
+            return;
+        }
+
+        fetch('/shop/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrf_token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('網路異常');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'ok') {
+                $(`#quantity-${slu}`).val(0);
+                $('#cart-count').text(data.cart_count);
+                $('#total-price').text(data.cart_total);
+
+                let cartTableBody = $('#cart-table-body');
+                cartTableBody.empty();
+
+                data.cart_items.forEach(item => {
+                    let rowHtml = `
+                        <tr id="cart-item-${item.slu}">
+                            <td>${item.name}</td>
+                            <td>
+                                <input type="number" class="form-control quantity-input" 
+                                    data-slu="${item.slu}" 
+                                    value="${item.quantity}" min="1">
+                            </td>
+                            <td class="product-stock" style="display: none;">${ item.stock }}</td>
+                            <td class="total-item-price">$${item.total.toFixed(2)}</td>
+                            <td>
+                                <button class="btn btn-danger remove-item" 
+                                        data-slu="${item.slu}">
+                                    刪除
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    cartTableBody.append(rowHtml);
+                });
+                alert(data.msg);
+            } else {
+                alert(data.msg);
+            }
+        })
+        .catch(error => {
+            alert('加入購物車失敗');
+            console.error('Error:', error);
+        });
+    });
+
+    $('#cart-table-body').on('change', '.quantity-input', function() {
+        let slu = $(this).data('slu');
+        let newQuantity = $(this).val();
+        let stockText = $(this).closest('tr').find('.product-stock').text();
+        console.log("stock text:", stockText);
+        stock = parseInt(stockText);
+        console.log(stock);
+        console.log(newQuantity);
+
+        if (newQuantity > stock) {
+            $(this).val(stock);
+            alert('庫存不足');
+            return;
+        }
+
+        updateCart(slu, newQuantity);
+    });
+
+    // 更新數量
+    function updateCart(slu, quantity) {
+        let csrf_token = $('input[name="csrfmiddlewaretoken"]').val();
+        let data = {
+            slu: slu,
+            quantity: quantity
+        };
+
+        fetch('/shop/cart/', {
+            method: 'PUT', 
+            headers: {
+                'X-CSRFToken': csrf_token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('網路異常');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'ok') {
+                $('#cart-count').text(data.cart_count);
+                $('#total-price').text(data.total_price);
+                data.cart_items.forEach(item => {
+                    $(`[data-slu="${item.slu}"]`).closest('tr').find('.total-item-price').text('$' + item.total.toFixed(2));
+                });
+            } else {
+                alert(data.msg);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('更新購物車失敗');
+        });
+    }
+
+    $('#cart-table-body').on('click', '.remove-item', function() {
+        let slu = $(this).data('slu');
+        removeItemFromCart(slu);
+    });
+
+    // 刪除商品
+    function removeItemFromCart(slu) {
+        let csrf_token = $('input[name="csrfmiddlewaretoken"]').val();
+        let data = { slu: slu };
+
+        fetch('/shop/cart/', {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrf_token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('網路異常');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'ok') {
+                $(`[data-slu="${slu}"]`).closest('tr').remove();  // 刪除商品行
+                $('#cart-count').text(data.cart_count);
+                $('#total-price').text(data.total_price);
+            } else {
+                alert(data.msg);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('刪除商品失敗');
+        });
+    }
+});
+</script>
+{% endblock %}

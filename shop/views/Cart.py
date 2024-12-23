@@ -32,6 +32,10 @@ class CustomCart(Cart):
 
         quantity = int(quantity)
         current_quantity = int(self.cart[slu]['quantity'])
+
+        if product.stock == 0:
+            raise ValueError('商品缺貨中')
+
         # 更新數量
         if update_quantity:
             if quantity > product.stock:
@@ -41,7 +45,7 @@ class CustomCart(Cart):
         else:
             new_quaantity = quantity + current_quantity
             if new_quaantity > product.stock:
-                raise ValueError('購物車數量已大於庫存')
+                raise ValueError('加入購物車數量大於庫存')
             
             self.cart[slu]['quantity'] = new_quaantity
 
@@ -59,11 +63,6 @@ class CustomCart(Cart):
             total += float(item['price']) * int(item['quantity'])
         return int(total)
 
-    # 清空
-    def clear(self):
-        del self.session['cart']
-        self.save()
-
     def get_items(self):
         return self.cart
 
@@ -72,7 +71,7 @@ class CustomCart(Cart):
         slu = str(slu)
         if slu in self.cart:
             del self.cart[slu]
-            self.save()
+            self.session.modified = True
 
     # 使購物車可以迭代，便於在模板中使用
     def __iter__(self):

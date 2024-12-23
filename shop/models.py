@@ -1,4 +1,5 @@
-from django.db import models
+from django.db import models, transaction
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from filer.fields.image import FilerImageField
 import random
@@ -52,12 +53,13 @@ class Order(models.Model):
     full_name = models.CharField(max_length=20) 
     address = models.CharField(max_length=200)
     phone = models.CharField(max_length=15)
+    total_amount = models.DecimalField(max_digits=8, decimal_places=2)
     create_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
     status = models.CharField(  #訂單狀態
         max_length=20,
-        choices=[('unpaid', '未付款'), ('paid', '已付款'), ('shipped', '已出貨')],
-        default='unpaid',
+        choices=[('未付款', '未付款'), ('已付款', '已付款'), ('已出貨', '已出貨')],
+        default='未付款',
     )
     class Meta:
         ordering = ('-create_date',)    # 按建立日期降序排列

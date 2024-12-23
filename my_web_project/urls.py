@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from shop.views import paypal_ipn
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,8 +26,9 @@ urlpatterns = [
     path('shop/', include('shop.urls')),
     path('filer/', include('filer.urls')),
     path('panda/', include('panda_app.urls')),
-    path('captcha/', include('captcha.urls')), # 機器人驗證模組
-    path('accounts/', include('registration.backends.default.urls')), # 帳號註冊驗證
+    path('captcha/', include('captcha.urls')),                          # 機器人驗證模組
+    path('accounts/', include('registration.backends.default.urls')),   # 帳號註冊驗證
+    # path('paypal/ipn/', paypal_ipn, name='paypal_ipn'),
 ]
 
 

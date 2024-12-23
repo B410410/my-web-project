@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}用戶資料{% endblock %}
+
+{% block content %}
+    <div class="container" style="margin-top: 80px;">
+        <h1>用戶資料</h1>
+        <form id="profile-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="name">名稱</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ user.username }}" required>
+            </div>
+            <div class="form-group">
+                <label for="email">信箱</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+            </div>
+            <div class="form-group">
+                <label for="password">密碼</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="如果要更改密碼請輸入新密碼">
+            </div>
+            <button type="button" class="btn btn-primary" id="submit-btn">更新資料</button>
+        </form>
+
+        <h3><div id="Message" style="display:none;"></div></h3>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#profile-form').on('click', function(e) {
+        $('#Message').hide();
+        const csrftoken = $('input[name=csrfmiddlewaretoken]').val();
+        const name = $('#name').val();
+        const email = $('#email').val();
+        const password = $('#password').val();
+
+        // 表單資料檢查
+        if (!name || !email) {
+            $('#Message').text('名稱和信箱是必填！').show().css('color', 'red');
+            return;
+        }
+
+        const formData = {
+            'name': name,
+            'email': email,
+            'password': password
+        };
+
+        // 如果沒有密碼則刪除密碼欄位，避免發送空密碼
+        if (!password) {
+            delete formData.password;
+        }
+
+        fetch('{% url "shop:profile" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                alert(data.msg);
+            } else {
+                $('#Message').text(data.msg).show().css('color', 'red');
+            }
+        })
+        .catch(error => {
+            $('#Message').text('修改失敗，請稍後再試').show().css('color', 'red');
+            console.error('Error:', error);
+        })
+        .finally(() => {
+            $('#password').val('');
+        });
+    });
+});
+</script>
+{% endblock %}

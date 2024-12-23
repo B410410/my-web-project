@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}登入{% endblock %}
+
+{% block extra_css %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+    }
+
+    body {
+        background-color: #f4f7fc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .container {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .login-form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    label {
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    input[type="text"], input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        color: #333;
+    }
+
+    input[type="submit"], input[type="reset"] {
+        width: 48%;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    input[type="submit"] {
+        background-color: #4CAF50;
+        color: white;
+        margin-right: 4%;
+    }
+
+    input[type="reset"] {
+        background-color: #f44336;
+        color: white;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    input:focus {
+        border-color: #4CAF50;
+        outline: none;
+    }
+
+    input::placeholder {
+        color: #aaa;
+    }
+
+    input[type="submit"]:hover {
+        background-color: #45a049;
+    }
+
+    input[type="reset"]:hover {
+        background-color: #f35c4c;
+    }
+
+    input:invalid {
+        border-color: red;
+    }
+
+    input:valid {
+        border-color: green;
+    }
+
+    .error-message {
+        color: red;
+        margin-top: 5px;
+        font-size: 14px;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>登入</h1>
+    <form id="loginForm" class="login-form">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="username">帳號:</label>
+            <input type="text" id="username" name="username" placeholder="請輸入帳號" required>
+        </div>
+        <div class="form-group">
+            <label for="password">密碼:</label>
+            <input type="password" id="password" name="password" placeholder="請輸入密碼" required>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+        <div class="form-actions">
+            <input type="button" value="登入" class="btn btn-primary">
+            <input type="reset" value="清除" class="btn btn-secondary">
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#loginForm').on('click', function(e) {
+        // e.preventDefault();
+        
+        $('#errorMessage').hide();
+        const csrftoken = $('input[name=csrfmiddlewaretoken]').val();
+        const formData = {
+            username: $('#username').val(),
+            password: $('#password').val()
+        };
+
+        fetch('{% url "shop:login" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                window.location.href = data.redirect;
+            } else {
+                $('#errorMessage')
+                    .text(data.detail)
+                    .show();
+            }
+        })
+        .catch(error => {
+            $('#errorMessage')
+                .text('登入失敗，請稍後再試')
+                .show();
+            console.error('Error:', error);
+        });
+    });
+});
+</script>
+{% endblock %}

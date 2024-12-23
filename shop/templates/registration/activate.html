@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}啟用失敗{% endblock %}
+{% block content %}
+<div class="container">
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+    <div class="row">
+        <div class="col-md-12">
+            <h3 class="alert alert-primary">啟用失敗，請檢查啟用連結或重新註冊，謝謝。</h3>
+        </div>
+    </div>
+</div>
+{% endblock %}
