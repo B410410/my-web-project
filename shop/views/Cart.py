@@ -85,7 +85,7 @@ class CustomCart(Cart):
 
 
 class CartView(APIView):
-    template_name = 'cart.html'
+    template_name = 'Cart.html'
 
     def get(self, request):
         if not request.user.is_authenticated:

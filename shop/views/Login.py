@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.urls import reverse
 
 class LoginView(APIView):
-    template_name = 'login.html'
+    template_name = 'Login.html'
 
     def get(self, request):
         return render(request, self.template_name)

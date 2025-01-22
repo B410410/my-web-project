@@ -29,7 +29,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-# 加載 .env 文件
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 # load_dotenv()
 
 # email設定
